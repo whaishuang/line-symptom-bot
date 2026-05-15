@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>個管師資訊</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --navy: #1A3A5C;
+    --navy-light: #2D5F8A;
+    --green: #27AE60;
+    --gray: #F4F6F9;
+    --border: #E5EBF2;
+    --text: #1a1a2e;
+    --muted: #6B7280;
+    --radius: 14px;
+    --shadow: 0 2px 16px rgba(26,58,92,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: #F0F4F8;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--navy);
+    padding: 20px 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 0; right: 0;
+    height: 40px;
+    background: #F0F4F8;
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  }
+  .header-label { color: #7EB8E8; font-size: 12px; letter-spacing: 2px; }
+  .header-title { color: #fff; font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .header-sub   { color: #AACCEE; font-size: 13px; margin-top: 4px; }
+
+  .main { padding: 12px 16px 40px; }
+
+  /* Form Card */
+  .form-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .form-card-title {
+    background: var(--gray);
+    padding: 12px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-group {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-group:last-child { border-bottom: none; }
+  .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .form-label .required {
+    color: #E74C3C;
+    font-size: 10px;
+    background: #FEE;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .form-input {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--gray);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    outline: none;
+    border-color: var(--navy);
+    background: #fff;
+  }
+  .form-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* Info section (existing CM) */
+  .info-section {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .info-header {
+    background: var(--navy);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .info-avatar {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .info-name { color: #fff; font-size: 18px; font-weight: 700; }
+  .info-role { color: #AACCEE; font-size: 12px; }
+
+  .info-rows { padding: 8px 0; }
+  .info-row {
+    display: flex; align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-icon { font-size: 18px; width: 24px; text-align: center; }
+  .info-content {}
+  .info-label { font-size: 11px; color: var(--muted); }
+  .info-value { font-size: 15px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+  .action-row {
+    display: flex; gap: 8px;
+    padding: 12px 18px 16px;
+  }
+  .action-btn {
+    flex: 1; padding: 12px 8px;
+    border-radius: 10px; border: none;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+    text-align: center; display: block;
+    transition: opacity 0.2s;
+  }
+  .action-btn:active { opacity: 0.8; }
+  .btn-call  { background: var(--navy); color: #fff; }
+  .btn-sms   { background: #EBF5FB; color: var(--navy-light); }
+  .btn-email { background: #EBF5FB; color: var(--navy-light); }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius);
+    padding: 16px; font-size: 15px; font-weight: 700;
+    cursor: pointer; width: 100%;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary {
+    background: #fff; color: var(--navy);
+    border: 2px solid var(--navy); border-radius: var(--radius);
+    padding: 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; width: 100%;
+    margin-top: 10px;
+  }
+  .btn-edit {
+    background: var(--gray); color: var(--navy);
+    border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 13px 16px; font-size: 14px; font-weight: 600;
+    cursor: pointer; width: 100%;
+    margin: 0 18px 16px;
+    width: calc(100% - 36px);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #2ECC71; color: #fff;
+    padding: 12px 24px; border-radius: 30px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  .loading {
+    text-align: center; padding: 80px 20px; color: var(--muted);
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .section-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--navy); margin: 20px 0 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .action-bar { margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Case Manager</div>
+  <div class="header-title">👩‍⚕️ 個管師資訊</div>
+  <div class="header-sub" id="header-sub">載入中…</div>
+</div>
+
+<!-- Loading -->
+<div id="screen-loading" class="screen active">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>載入中…</div>
+  </div>
+</div>
+
+<!-- 有個管師資料 → 顯示 -->
+<div id="screen-view" class="screen">
+  <div class="main">
+    <div class="info-section">
+      <div class="info-header">
+        <div class="info-avatar">👩‍⚕️</div>
+        <div>
+          <div class="info-name" id="view-name"></div>
+          <div class="info-role">個案管理師</div>
+        </div>
+      </div>
+      <div class="info-rows">
+        <div class="info-row">
+          <div class="info-icon">📞</div>
+          <div class="info-content">
+            <div class="info-label">電話</div>
+            <div class="info-value" id="view-phone"></div>
+          </div>
+        </div>
+        <div class="info-row" id="view-email-row">
+          <div class="info-icon">✉️</div>
+          <div class="info-content">
+            <div class="info-label">Email</div>
+            <div class="info-value" id="view-email"></div>
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <a class="action-btn btn-call"  id="btn-call"  href="#">📞 打電話</a>
+        <a class="action-btn btn-sms"   id="btn-sms"   href="#">💬 簡訊</a>
+        <a class="action-btn btn-email" id="btn-email" href="#">✉️ Email</a>
+      </div>
+      <button class="btn-edit" onclick="showScreen('edit')">✏️ 修改個管師資料</button>
+    </div>
+  </div>
+</div>
+
+<!-- 無資料 or 修改 → 表單 -->
+<div id="screen-edit" class="screen">
+  <div class="main">
+    <div class="section-title" id="edit-title">✏️ 輸入個管師資料</div>
+
+    <div class="form-card">
+      <div class="form-card-title">個管師聯絡資訊</div>
+      <div class="form-group">
+        <div class="form-label">
+          👤 姓名
+          <span class="required">必填</span>
+        </div>
+        <input class="form-input" id="input-name" type="text"
+               placeholder="例如：王小明 護理師" maxlength="30">
+      </div>
+      <div class="form-group">
+        <div class="form-label">
+          📞 電話
+          <span class="required">必填</span>
+        </div>
+        <input class="form-input" id="input-phone" type="tel"
+               placeholder="例如：0912-345-678" maxlength="20">
+        <div class="form-hint">填入後可一鍵撥打電話或發簡訊</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">✉️ Email</div>
+        <input class="form-input" id="input-email" type="email"
+               placeholder="例如：cm@ntuh.gov.tw" maxlength="60">
+        <div class="form-hint">選填，填入後可一鍵寄信</div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-primary" onclick="saveCM()">💾 儲存個管師資料</button>
+      <button class="btn-secondary" id="cancel-btn" onclick="cancelEdit()" style="display:none">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let userId = '';
+let GAS_URL = 'YOUR_GAS_EXEC_URL'; // ← 部署後填入
+let hasCM = false;
+let cmData = null;
+
+async function init() {
+  await liff.init({ liffId: 'YOUR_LIFF_ID_CONTACT' }); // ← 填入
+  if (!liff.isLoggedIn()) { liff.login(); return; }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  // 從 URL 參數也可以取得 userId（從 LINE Bot 跳轉過來時）
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('userId')) userId = urlParams.get('userId');
+
+  await loadCM();
+}
+
+async function loadCM() {
+  showScreen('loading');
+  try {
+    const r = await fetch(`${GAS_URL}?action=getCM&userId=${userId}`);
+    const d = await r.json();
+
+    if (d.found) {
+      hasCM = true;
+      cmData = d.data;
+      showCMData(cmData);
+    } else {
+      hasCM = false;
+      document.getElementById('header-sub').textContent = '尚未設定個管師資料';
+      document.getElementById('edit-title').textContent = '✏️ 輸入個管師資料';
+      document.getElementById('cancel-btn').style.display = 'none';
+      showScreen('edit');
+    }
+  } catch(e) {
+    document.getElementById('header-sub').textContent = '載入失敗，請重試';
+    showScreen('edit');
+  }
+}
+
+function showCMData(cm) {
+  document.getElementById('header-sub').textContent = '您的個案管理師';
+  document.getElementById('view-name').textContent = cm.name;
+  document.getElementById('view-phone').textContent = cm.phone;
+
+  const phone = cm.phone.replace(/[^0-9+]/g, '');
+  document.getElementById('btn-call').href  = `tel:${phone}`;
+  document.getElementById('btn-sms').href   = `sms:${phone}`;
+
+  if (cm.email) {
+    document.getElementById('view-email').textContent = cm.email;
+    document.getElementById('btn-email').href = `mailto:${cm.email}`;
+    document.getElementById('view-email-row').style.display = 'flex';
+  } else {
+    document.getElementById('view-email-row').style.display = 'none';
+    document.getElementById('btn-email').style.display = 'none';
+  }
+
+  showScreen('view');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (name === 'edit' && hasCM && cmData) {
+    // 預填現有資料
+    document.getElementById('input-name').value  = cmData.name  || '';
+    document.getElementById('input-phone').value = cmData.phone || '';
+    document.getElementById('input-email').value = cmData.email || '';
+    document.getElementById('edit-title').textContent = '✏️ 修改個管師資料';
+    document.getElementById('cancel-btn').style.display = 'block';
+    document.getElementById('header-sub').textContent = '修改個管師資料';
+  }
+}
+
+function cancelEdit() {
+  if (hasCM && cmData) {
+    showCMData(cmData);
+    showScreen('view');
+  }
+}
+
+async function saveCM() {
+  const name  = document.getElementById('input-name').value.trim();
+  const phone = document.getElementById('input-phone').value.trim();
+  const email = document.getElementById('input-email').value.trim();
+
+  if (!name)  { alert('請填入個管師姓名'); return; }
+  if (!phone) { alert('請填入個管師電話'); return; }
+
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '儲存中…';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(
+      `${GAS_URL}?action=saveCM&userId=${userId}` +
+      `&cmName=${encodeURIComponent(name)}` +
+      `&cmPhone=${encodeURIComponent(phone)}` +
+      `&cmEmail=${encodeURIComponent(email)}`
+    );
+    const d = await r.json();
+
+    if (d.ok) {
+      cmData = { name, phone, email };
+      hasCM = true;
+      showToast('✅ 個管師資料已儲存！');
+      setTimeout(() => {
+        showCMData(cmData);
+        showScreen('view');
+      }, 1200);
+    } else {
+      alert('儲存失敗：' + (d.error || '請重試'));
+    }
+  } catch(e) {
+    alert('網路錯誤，請重試');
+  } finally {
+    btn.textContent = '💾 儲存個管師資料';
+    btn.disabled = false;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

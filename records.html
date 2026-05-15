@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>我的記錄</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --navy: #1A3A5C;
+    --navy-light: #2D5F8A;
+    --red: #C0392B;
+    --orange: #D35400;
+    --green: #27AE60;
+    --red-bg: #FDF0EE;
+    --orange-bg: #FEF5EC;
+    --green-bg: #EBF9F1;
+    --gray: #F4F6F9;
+    --border: #E5EBF2;
+    --text: #1a1a2e;
+    --muted: #6B7280;
+    --radius: 14px;
+    --shadow: 0 2px 16px rgba(26,58,92,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: #F0F4F8;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--navy);
+    padding: 20px 20px 28px;
+    position: relative; overflow: hidden;
+  }
+  .header::after {
+    content: ''; position: absolute;
+    bottom: -20px; left: 0; right: 0; height: 40px;
+    background: #F0F4F8;
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  }
+  .header-label { color: #7EB8E8; font-size: 12px; letter-spacing: 2px; }
+  .header-title { color: #fff; font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .header-sub   { color: #AACCEE; font-size: 13px; margin-top: 4px; }
+
+  .main { padding: 12px 16px 40px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: #fff; border-radius: 12px;
+    padding: 14px 10px; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-num { font-size: 28px; font-weight: 800; }
+  .stat-num.red    { color: var(--red); }
+  .stat-num.orange { color: var(--orange); }
+  .stat-num.green  { color: var(--green); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Section title */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    margin: 20px 0 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title span { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  /* Log items */
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+    display: flex; align-items: stretch;
+  }
+  .log-level-bar {
+    width: 5px; flex-shrink: 0;
+  }
+  .log-level-bar.l1 { background: var(--red); }
+  .log-level-bar.l2 { background: var(--orange); }
+  .log-level-bar.l3 { background: var(--green); }
+  .log-content { padding: 12px 14px; flex: 1; }
+  .log-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .log-symptom { font-size: 15px; font-weight: 700; color: var(--text); }
+  .log-badge {
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+    flex-shrink: 0; margin-left: 8px;
+  }
+  .log-badge.l1 { background: var(--red-bg); color: var(--red); }
+  .log-badge.l2 { background: var(--orange-bg); color: var(--orange); }
+  .log-badge.l3 { background: var(--green-bg); color: var(--green); }
+  .log-followup { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .log-time { font-size: 11px; color: #B0B8C4; margin-top: 6px; }
+
+  .empty-state {
+    text-align: center; padding: 50px 20px;
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  /* Profile Card */
+  .profile-card {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .profile-header {
+    background: var(--gray);
+    padding: 12px 18px;
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .edit-link {
+    font-size: 12px; color: var(--navy); font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none; background: none;
+  }
+  .profile-row {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-icon { font-size: 18px; width: 24px; text-align: center; }
+  .profile-key { font-size: 11px; color: var(--muted); }
+  .profile-val { font-size: 15px; font-weight: 600; color: var(--text); margin-top: 2px; }
+  .profile-val.empty { color: #B0B8C4; font-weight: 400; font-style: italic; }
+
+  /* Edit form */
+  .edit-form { padding: 16px 18px; display: none; border-top: 1px solid var(--border); }
+  .edit-form.open { display: block; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  .form-input {
+    width: 100%; border: 2px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 15px; color: var(--text);
+    background: var(--gray); transition: border-color 0.2s; -webkit-appearance: none;
+  }
+  .form-input:focus { outline: none; border-color: var(--navy); background: #fff; }
+  .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-save {
+    flex: 2; background: var(--navy); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 13px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .btn-cancel-small {
+    flex: 1; background: var(--gray); color: var(--muted);
+    border: 2px solid var(--border); border-radius: 10px;
+    padding: 13px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #2ECC71; color: #fff;
+    padding: 12px 24px; border-radius: 30px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  .loading {
+    text-align: center; padding: 80px 20px; color: var(--muted);
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">My Records</div>
+  <div class="header-title">📋 我的記錄</div>
+  <div class="header-sub" id="header-sub">載入中…</div>
+</div>
+
+<div class="main" id="main-content">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>載入中…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let userId = '';
+let GAS_URL = 'YOUR_GAS_EXEC_URL'; // ← 部署後填入
+let profileData = {};
+
+const LEVEL_INFO = {
+  '1': { cls:'l1', badge:'🚨 第一級' },
+  '2': { cls:'l2', badge:'⚠️ 第二級' },
+  '3': { cls:'l3', badge:'✅ 第三級' },
+};
+
+async function init() {
+  await liff.init({ liffId: 'YOUR_LIFF_ID_RECORDS' }); // ← 填入
+  if (!liff.isLoggedIn()) { liff.login(); return; }
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  await loadAll();
+}
+
+async function loadAll() {
+  try {
+    const [patientRes, logsRes] = await Promise.all([
+      fetch(`${GAS_URL}?action=getPatient&userId=${userId}`).then(r=>r.json()),
+      fetch(`${GAS_URL}?action=getLogs&userId=${userId}`).then(r=>r.json()),
+    ]);
+
+    profileData = patientRes.data || {};
+    const logs  = logsRes.data  || [];
+
+    document.getElementById('header-sub').textContent =
+      profileData.real_name ? `${profileData.real_name} 的記錄` : '症狀回報記錄';
+
+    renderPage(logs, profileData);
+  } catch(e) {
+    document.getElementById('main-content').innerHTML =
+      '<div class="loading"><div>載入失敗，請重試</div></div>';
+  }
+}
+
+function renderPage(logs, patient) {
+  const l1 = logs.filter(l => String(l.level) === '1').length;
+  const l2 = logs.filter(l => String(l.level) === '2').length;
+  const l3 = logs.filter(l => String(l.level) === '3').length;
+
+  let logsHtml = '';
+  if (logs.length === 0) {
+    logsHtml = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">還沒有症狀記錄<br>有不適時請點選「回報症狀」</div>
+      </div>`;
+  } else {
+    logsHtml = '<div class="log-list">';
+    logs.forEach(log => {
+      const lv   = String(log.level);
+      const info = LEVEL_INFO[lv] || { cls:'l3', badge:'—' };
+      const fu   = log.followup_answer ? `<div class="log-followup">↳ ${log.followup_answer}</div>` : '';
+      const time = String(log.timestamp).slice(0, 16);
+      logsHtml += `
+        <div class="log-item">
+          <div class="log-level-bar ${info.cls}"></div>
+          <div class="log-content">
+            <div class="log-top">
+              <div class="log-symptom">${log.symptom_label || log.symptom_id}</div>
+              <div class="log-badge ${info.cls}">${info.badge}</div>
+            </div>
+            ${fu}
+            <div class="log-time">🕐 ${time}</div>
+          </div>
+        </div>`;
+    });
+    logsHtml += '</div>';
+  }
+
+  const realName = patient.real_name || '';
+  const mrn      = patient.mrn || '';
+
+  document.getElementById('main-content').innerHTML = `
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num red">${l1}</div>
+        <div class="stat-label">🚨 第一級</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num orange">${l2}</div>
+        <div class="stat-label">⚠️ 第二級</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num green">${l3}</div>
+        <div class="stat-label">✅ 第三級</div>
+      </div>
+    </div>
+
+    <!-- 個人資料 -->
+    <div class="section-title">👤 我的資料</div>
+    <div class="profile-card">
+      <div class="profile-header">
+        個人資料
+        <button class="edit-link" onclick="toggleEdit()">✏️ 編輯</button>
+      </div>
+      <div class="profile-row">
+        <div class="profile-icon">👤</div>
+        <div>
+          <div class="profile-key">姓名</div>
+          <div class="profile-val ${!realName ? 'empty' : ''}">${realName || '尚未填寫'}</div>
+        </div>
+      </div>
+      <div class="profile-row">
+        <div class="profile-icon">🏥</div>
+        <div>
+          <div class="profile-key">病歷號</div>
+          <div class="profile-val ${!mrn ? 'empty' : ''}">${mrn || '尚未填寫'}</div>
+        </div>
+      </div>
+
+      <!-- 編輯表單 -->
+      <div class="edit-form" id="edit-form">
+        <div class="form-group">
+          <div class="form-label">👤 姓名</div>
+          <input class="form-input" id="input-name" type="text"
+                 placeholder="請填入您的姓名" value="${realName}" maxlength="20">
+        </div>
+        <div class="form-group">
+          <div class="form-label">🏥 病歷號</div>
+          <input class="form-input" id="input-mrn" type="text"
+                 placeholder="請填入您的病歷號" value="${mrn}" maxlength="20">
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveProfile()">💾 儲存</button>
+          <button class="btn-cancel-small" onclick="toggleEdit()">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 症狀記錄 -->
+    <div class="section-title">
+      📊 症狀記錄
+      <span>最近 ${logs.length} 筆</span>
+    </div>
+    ${logsHtml}
+  `;
+}
+
+function toggleEdit() {
+  const form = document.getElementById('edit-form');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) {
+    document.getElementById('input-name').focus();
+  }
+}
+
+async function saveProfile() {
+  const realName = document.getElementById('input-name').value.trim();
+  const mrn      = document.getElementById('input-mrn').value.trim();
+
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '儲存中…';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(
+      `${GAS_URL}?action=savePatient&userId=${userId}` +
+      `&realName=${encodeURIComponent(realName)}` +
+      `&mrn=${encodeURIComponent(mrn)}`
+    );
+    const d = await r.json();
+
+    if (d.ok) {
+      profileData.real_name = realName;
+      profileData.mrn = mrn;
+      showToast('✅ 資料已更新！');
+      setTimeout(() => loadAll(), 1000);
+    } else {
+      alert('儲存失敗，請重試');
+    }
+  } catch(e) {
+    alert('網路錯誤，請重試');
+  } finally {
+    btn.textContent = '💾 儲存';
+    btn.disabled = false;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

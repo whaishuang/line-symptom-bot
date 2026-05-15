@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>症狀回報</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --navy: #1A3A5C;
+    --navy-light: #2D5F8A;
+    --red: #C0392B;
+    --orange: #D35400;
+    --green: #27AE60;
+    --red-bg: #FDF0EE;
+    --orange-bg: #FEF5EC;
+    --green-bg: #EBF9F1;
+    --gray: #F4F6F9;
+    --text: #1a1a2e;
+    --muted: #6B7280;
+    --radius: 14px;
+    --shadow: 0 2px 16px rgba(26,58,92,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: #F0F4F8;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--navy);
+    padding: 20px 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 0; right: 0;
+    height: 40px;
+    background: #F0F4F8;
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  }
+  .header-label { color: #7EB8E8; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+  .header-title { color: #fff; font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .header-sub   { color: #AACCEE; font-size: 13px; margin-top: 4px; }
+
+  /* Main */
+  .main { padding: 12px 16px 32px; }
+
+  /* Level badges */
+  .level-guide {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .badge {
+    flex: 1; border-radius: 10px; padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600;
+  }
+  .badge-1 { background: var(--red-bg); color: var(--red); }
+  .badge-2 { background: var(--orange-bg); color: var(--orange); }
+  .badge-3 { background: var(--green-bg); color: var(--green); }
+  .badge .icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+  /* Category */
+  .cat-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--muted); text-transform: uppercase;
+    margin: 20px 0 8px;
+  }
+  .symptom-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .sym-btn {
+    background: #fff;
+    border: 2px solid #E5EBF2;
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: var(--shadow);
+  }
+  .sym-btn:active { transform: scale(0.96); }
+  .sym-btn .sym-icon { font-size: 26px; display: block; margin-bottom: 6px; }
+  .sym-btn .sym-name { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.3; }
+  .sym-btn.selected { border-color: var(--navy); background: var(--navy); }
+  .sym-btn.selected .sym-name { color: #fff; }
+
+  /* Followup */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .followup-card {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .followup-header {
+    background: var(--navy); padding: 18px 20px;
+  }
+  .followup-symptom { color: #AACCEE; font-size: 12px; }
+  .followup-q { color: #fff; font-size: 16px; font-weight: 700; margin-top: 6px; line-height: 1.4; }
+  .followup-options { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .opt-btn {
+    border: 2px solid #E5EBF2; border-radius: 10px;
+    padding: 14px 16px; background: var(--gray);
+    font-size: 14px; font-weight: 500; color: var(--text);
+    cursor: pointer; text-align: left; transition: all 0.18s;
+    line-height: 1.4;
+  }
+  .opt-btn:active { transform: scale(0.98); background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* Result */
+  .result-card {
+    border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+  }
+  .result-header {
+    padding: 24px 20px;
+  }
+  .result-header.l1 { background: var(--red); }
+  .result-header.l2 { background: var(--orange); }
+  .result-header.l3 { background: var(--green); }
+  .result-level { color: rgba(255,255,255,0.8); font-size: 12px; }
+  .result-title { color: #fff; font-size: 20px; font-weight: 800; margin-top: 6px; }
+  .result-body { background: #fff; padding: 20px; }
+  .result-msg { font-size: 14px; line-height: 1.8; color: #333; }
+  .result-msg strong { color: var(--navy); }
+
+  .cm-section { margin-top: 20px; }
+  .cm-card {
+    background: var(--gray); border-radius: 12px; padding: 16px;
+    margin-top: 12px;
+  }
+  .cm-name { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .cm-info { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .cm-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .cm-action-btn {
+    flex: 1; padding: 10px 6px; border-radius: 8px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none;
+    text-align: center; display: block;
+  }
+  .btn-call  { background: var(--navy); color: #fff; }
+  .btn-sms   { background: #E8F0FE; color: var(--navy-light); }
+  .btn-email { background: #E8F0FE; color: var(--navy-light); }
+
+  /* Action buttons */
+  .action-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-primary {
+    background: var(--navy); color: #fff;
+    border: none; border-radius: var(--radius);
+    padding: 16px; font-size: 15px; font-weight: 700;
+    cursor: pointer; width: 100%; transition: opacity 0.2s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary {
+    background: #fff; color: var(--navy);
+    border: 2px solid var(--navy); border-radius: var(--radius);
+    padding: 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; width: 100%;
+  }
+
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--navy); font-size: 14px; font-weight: 600;
+    background: none; border: none; cursor: pointer;
+    margin-bottom: 16px; padding: 4px 0;
+  }
+
+  .loading {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .loading .spinner {
+    width: 36px; height: 36px; border: 3px solid #E5EBF2;
+    border-top-color: var(--navy); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Screen 1: 症狀選擇 -->
+<div id="screen-symptoms" class="screen active">
+  <div class="header">
+    <div class="header-label">Symptom Report</div>
+    <div class="header-title">🩺 症狀回報</div>
+    <div class="header-sub">請選擇您目前的不適症狀</div>
+  </div>
+  <div class="main">
+    <div class="level-guide">
+      <div class="badge badge-1"><span class="icon">🚨</span>第一級<br>立即急診</div>
+      <div class="badge badge-2"><span class="icon">⚠️</span>第二級<br>聯絡個管師</div>
+      <div class="badge badge-3"><span class="icon">✅</span>第三級<br>自行觀察</div>
+    </div>
+    <div id="symptom-list"></div>
+  </div>
+</div>
+
+<!-- Screen 2: 追問 -->
+<div id="screen-followup" class="screen">
+  <div class="header">
+    <div class="header-label">Follow-up Question</div>
+    <div class="header-title">🔍 進一步確認</div>
+    <div class="header-sub">請選擇最符合的狀況</div>
+  </div>
+  <div class="main">
+    <button class="back-btn" onclick="showScreen('symptoms')">← 重新選擇症狀</button>
+    <div class="followup-card">
+      <div class="followup-header">
+        <div class="followup-symptom" id="fu-symptom-label"></div>
+        <div class="followup-q" id="fu-question"></div>
+      </div>
+      <div class="followup-options" id="fu-options"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 3: 結果 -->
+<div id="screen-result" class="screen">
+  <div class="header">
+    <div class="header-label">Assessment Result</div>
+    <div class="header-title">📋 評估結果</div>
+    <div class="header-sub">根據您回報的症狀</div>
+  </div>
+  <div class="main">
+    <div class="result-card">
+      <div class="result-header" id="result-header">
+        <div class="result-level" id="result-level-label"></div>
+        <div class="result-title" id="result-title"></div>
+      </div>
+      <div class="result-body">
+        <div class="result-msg" id="result-msg"></div>
+        <div class="cm-section" id="cm-section" style="display:none">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">👩‍⚕️ 您的個管師</div>
+          <div class="cm-card" id="cm-card"></div>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-primary" onclick="showScreen('symptoms')">📋 繼續回報其他症狀</button>
+      <button class="btn-secondary" onclick="liff.closeWindow()">✓ 完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="screen-loading" class="screen active" style="display:none">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>載入中…</div>
+  </div>
+</div>
+
+<script>
+// ── 症狀資料 ─────────────────────────────────────────────────
+const SYMPTOMS = [
+  { id:'fever',        label:'🌡️ 發燒',      category:'感染／急症',
+    preNote:'化療後任何發燒，或非化療期體溫 ≥38.3°C 持續超過 1 小時',
+    followup:{ key:'chemo_timing', question:'請問您最近化療是什麼時候？',
+      options:[{label:'14 天以內',value:'within14'},{label:'14 天以上',value:'over14'},{label:'目前沒在化療',value:'none'}]},
+    grading:()=>1 },
+  { id:'chills',       label:'🥶 畏寒／寒顫', category:'感染／急症',
+    followup:{ key:'chemo_timing', question:'請問您最近化療是什麼時候？',
+      options:[{label:'14 天以內',value:'within14'},{label:'14 天以上',value:'over14'},{label:'目前沒在化療',value:'none'}]},
+    grading:(a)=>a==='within14'?1:2 },
+  { id:'sore_throat',  label:'😮 喉嚨痛',     category:'感染／急症',
+    followup:{ key:'swallow', question:'喉嚨痛的狀況是？',
+      options:[{label:'完全無法喝水或吞嚥',value:'severe'},{label:'吞嚥困難但仍可喝水',value:'moderate'},{label:'輕微不適，可進食',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+  { id:'cough',        label:'😷 咳嗽',       category:'感染／急症',
+    followup:{ key:'cough_type', question:'咳嗽的狀況是？',
+      options:[{label:'有血痰',value:'blood'},{label:'有黃綠色痰，合併發燒',value:'purulent_fever'},{label:'有痰，無發燒，持續 > 3 天',value:'productive'},{label:'乾咳，輕微',value:'dry'}]},
+    grading:(a)=>({blood:1,purulent_fever:1,productive:2,dry:3}[a]||2) },
+  { id:'dyspnea',      label:'😮‍💨 呼吸困難',  category:'感染／急症',
+    followup:{ key:'dyspnea_timing', question:'喘的狀況是？',
+      options:[{label:'休息時也喘，或突然發生',value:'rest'},{label:'走半層樓就喘，比以前明顯變差',value:'exertion_worse'},{label:'輕度活動後氣促，休息可恢復',value:'mild'}]},
+    grading:(a)=>({rest:1,exertion_worse:2,mild:3}[a]||1) },
+  { id:'consciousness',label:'😵 意識改變',   category:'感染／急症', followup:null, grading:()=>1 },
+
+  { id:'nausea',       label:'🤢 噁心',       category:'GI 症狀',
+    followup:{ key:'nausea_severity', question:'噁心的程度是？',
+      options:[{label:'完全無法進食或喝水 > 12 小時',value:'severe'},{label:'可喝水，但吃不下 > 24 小時',value:'moderate'},{label:'輕微，仍可進食',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+  { id:'vomiting',     label:'🤮 嘔吐',       category:'GI 症狀',
+    followup:{ key:'vomit_type', question:'嘔吐的狀況是？',
+      options:[{label:'有血（鮮紅色或咖啡色）',value:'blood'},{label:'一天 4 次以上，無法喝水',value:'severe'},{label:'一天 1–3 次，仍可喝少量水',value:'moderate'}]},
+    grading:(a)=>({blood:1,severe:1,moderate:2}[a]||2) },
+  { id:'diarrhea',     label:'🚽 腹瀉',       category:'GI 症狀',
+    followup:{ key:'diarrhea_type', question:'腹瀉的狀況是？',
+      options:[{label:'有血便或黑便',value:'blood'},{label:'合併發燒',value:'fever'},{label:'一天 4 次以上水便，無發燒',value:'severe'},{label:'一天 1–3 次稀便',value:'mild'}]},
+    grading:(a)=>({blood:1,fever:1,severe:2,mild:3}[a]||2) },
+  { id:'constipation', label:'💊 便秘',        category:'GI 症狀',
+    followup:{ key:'constipation_severity', question:'便秘的狀況是？',
+      options:[{label:'5 天以上，合併嘔吐或嚴重腹脹',value:'severe'},{label:'3–5 天，腹脹不適',value:'moderate'},{label:'1–3 天，有排氣',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+  { id:'poor_appetite',label:'🍽️ 食慾下降',   category:'GI 症狀',
+    followup:{ key:'appetite_severity', question:'食慾狀況是？',
+      options:[{label:'完全無法進食 > 2 天，合併嘔吐',value:'severe'},{label:'進食量 < 平常一半，持續 > 3 天',value:'moderate'},{label:'食慾略差，仍有進食',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||3) },
+  { id:'mucositis',    label:'🦷 嘴破',        category:'GI 症狀',
+    followup:{ key:'mucositis_severity', question:'嘴破的狀況是？',
+      options:[{label:'完全無法進食或喝水，或有出血',value:'severe'},{label:'疼痛明顯（≥5分），影響進食，仍可喝水',value:'moderate'},{label:'輕微不適（< 5分），不影響進食',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+
+  { id:'bleeding',     label:'🩸 出血',        category:'血液科核心',
+    followup:{ key:'bleeding_type', question:'出血的狀況是？',
+      options:[{label:'大量出血或無法止血',value:'major'},{label:'疑似內出血（黑便、吐血、大量血尿）',value:'internal'},{label:'鼻血 > 15 分鐘、牙齦明顯出血',value:'moderate'},{label:'少量鼻血或牙齦出血，可自行止血',value:'mild'}]},
+    grading:(a)=>({major:1,internal:1,moderate:2,mild:3}[a]||2) },
+  { id:'fatigue',      label:'😴 疲倦',        category:'血液科核心',
+    followup:{ key:'fatigue_severity', question:'疲倦的程度是？',
+      options:[{label:'完全無法下床，合併頭暈或喘',value:'severe'},{label:'日常活動明顯受限（無法完成家事）',value:'moderate'},{label:'輕微，仍可日常活動',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||3) },
+  { id:'palpitation',  label:'💓 心悸',        category:'血液科核心',
+    followup:{ key:'palpitation_severity', question:'心悸的狀況是？',
+      options:[{label:'合併胸痛或呼吸困難',value:'severe'},{label:'持續 > 30 分鐘，合併頭暈',value:'moderate'},{label:'短暫，休息後改善',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+
+  { id:'chest_pain',   label:'💔 胸痛',        category:'疼痛', followup:null, grading:()=>1 },
+  { id:'pain_general', label:'😣 疼痛',         category:'疼痛',
+    followup:{ key:'pain_score', question:'疼痛指數大約幾分？（0=不痛，10=最痛）',
+      options:[{label:'8–10 分（劇烈）',value:'severe'},{label:'4–7 分（中等）',value:'moderate'},{label:'1–3 分（輕微）',value:'mild'}]},
+    grading:(a)=>({severe:1,moderate:2,mild:3}[a]||2) },
+  { id:'abdominal_pain',label:'🤕 腹痛',       category:'疼痛',
+    followup:{ key:'abdominal_pain_type', question:'腹痛的狀況是？',
+      options:[{label:'合併發燒或腹部僵硬',value:'fever'},{label:'右下腹劇烈疼痛',value:'rlq'},{label:'持續腹痛 > 4 小時，無發燒',value:'persistent'},{label:'輕微間歇性不適',value:'mild'}]},
+    grading:(a)=>({fever:1,rlq:1,persistent:2,mild:3}[a]||2) },
+  { id:'bone_pain',    label:'🦴 骨痛',        category:'疼痛',
+    followup:{ key:'bone_pain_type', question:'骨痛的狀況是？',
+      options:[{label:'合併下肢無力或麻木',value:'neuro'},{label:'突發嚴重背痛（可能骨折）',value:'fracture'},{label:'新發生中等骨痛，持續加重',value:'moderate'},{label:'打生長激素後輕微骨痛',value:'gcsf'}]},
+    grading:(a)=>({neuro:1,fracture:1,moderate:2,gcsf:3}[a]||2) },
+
+  { id:'numbness',     label:'🤸 手腳麻木',    category:'神經症狀',
+    followup:{ key:'numbness_onset', question:'麻木的狀況是？',
+      options:[{label:'合併下肢無力或大小便失禁',value:'spinal'},{label:'新發生，逐漸加重，影響走路',value:'progressive'},{label:'一直都有，沒有加重',value:'stable'}]},
+    grading:(a)=>({spinal:1,progressive:2,stable:3}[a]||2) },
+  { id:'tingling',     label:'⚡ 手腳刺痛',    category:'神經症狀',
+    followup:{ key:'tingling_onset', question:'刺痛的狀況是？',
+      options:[{label:'新發生，持續加重',value:'progressive'},{label:'一直都有，穩定沒有加重',value:'stable'}]},
+    grading:(a)=>({progressive:2,stable:3}[a]||2) },
+  { id:'weakness',     label:'💪 肌肉無力',    category:'神經症狀',
+    followup:{ key:'weakness_type', question:'無力的狀況是？',
+      options:[{label:'突然發生，單側或雙下肢（合併麻木）',value:'acute'},{label:'逐漸加重，影響走路或爬樓梯',value:'progressive'},{label:'輕微全身無力，可日常活動',value:'mild'}]},
+    grading:(a)=>({acute:1,progressive:2,mild:3}[a]||2) },
+  { id:'unsteady_gait',label:'🚶 步態不穩',    category:'神經症狀',
+    followup:{ key:'fall_status', question:'步態不穩的狀況是？',
+      options:[{label:'已經跌倒（頭部撞擊）',value:'fallen'},{label:'明顯不穩，有跌倒風險',value:'risk'},{label:'輕微不穩，謹慎可自行走動',value:'mild'}]},
+    grading:(a)=>({fallen:1,risk:2,mild:3}[a]||2) },
+  { id:'leg_swelling', label:'🦵 下肢水腫',    category:'其他',
+    followup:{ key:'swelling_type', question:'水腫的狀況是？',
+      options:[{label:'單側腫脹伴紅熱疼痛（疑似血栓）',value:'dvt'},{label:'合併呼吸困難（疑似肺栓塞）',value:'pe'},{label:'雙側，快速加重（數天內）',value:'bilateral_new'},{label:'雙側，輕微，長期存在',value:'stable'}]},
+    grading:(a)=>({dvt:1,pe:1,bilateral_new:2,stable:3}[a]||2) },
+  { id:'rash',         label:'🔴 皮膚紅疹',    category:'其他',
+    followup:{ key:'rash_type', question:'皮疹的狀況是？',
+      options:[{label:'合併嘴唇或眼睛黏膜病變',value:'mucosal'},{label:'全身蕁麻疹合併呼吸困難',value:'anaphylaxis'},{label:'新藥使用後新發廣泛皮疹',value:'drug'},{label:'輕微局部紅疹，不擴散',value:'mild'}]},
+    grading:(a)=>({mucosal:1,anaphylaxis:1,drug:2,mild:3}[a]||2) },
+];
+
+const LEVEL_INFO = {
+  1: { cls:'l1', label:'第一級', title:'🚨 請立即前往急診',
+       msg:'您回報的症狀需要<strong>立即就醫</strong>。\n\n請現在前往急診，或請家人協助送醫。\n如無法自行前往，請撥打 <strong>119</strong>。\n\n抵達急診時請告知：\n「我是血液腫瘤科病人，目前正在接受治療」\n\n<strong>個管師也已同時收到通知。</strong>' },
+  2: { cls:'l2', label:'第二級', title:'⚠️ 請聯絡個管師，安排提早回診',
+       msg:'您回報的症狀建議<strong>盡早回診評估</strong>。\n\n請今天聯絡您的個案管理師，說明目前症狀，由個管師協助安排提早回診。\n\n若症狀突然加重，請直接前往急診。' },
+  3: { cls:'l3', label:'第三級', title:'✅ 可自行觀察',
+       msg:'您回報的症狀目前在可觀察範圍內。\n\n• 多休息，維持適當水分補充\n• 若症狀持續超過 3 天或突然加重，請聯絡個管師\n• 下次門診時告知醫師目前狀況' },
+};
+
+// ── 狀態 ─────────────────────────────────────────────────────
+let userId = '';
+let userProfile = null;
+let currentSymptom = null;
+let GAS_URL = 'YOUR_GAS_EXEC_URL'; // ← 部署後填入
+
+// ── 初始化 ───────────────────────────────────────────────────
+async function init() {
+  await liff.init({ liffId: 'YOUR_LIFF_ID_SYMPTOM' }); // ← 填入
+  if (!liff.isLoggedIn()) { liff.login(); return; }
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+  userProfile = profile;
+  // 確保病人存在
+  await fetch(`${GAS_URL}?action=savePatient&userId=${userId}&displayName=${encodeURIComponent(profile.displayName)}`);
+  renderSymptoms();
+}
+
+// ── 渲染症狀列表 ──────────────────────────────────────────────
+function renderSymptoms() {
+  const categories = {};
+  SYMPTOMS.forEach(s => {
+    if (!categories[s.category]) categories[s.category] = [];
+    categories[s.category].push(s);
+  });
+
+  const el = document.getElementById('symptom-list');
+  el.innerHTML = '';
+  Object.entries(categories).forEach(([cat, syms]) => {
+    el.innerHTML += `<div class="cat-label">${cat}</div><div class="symptom-grid">`;
+    syms.forEach(s => {
+      const [icon, ...nameParts] = s.label.split(' ');
+      const name = nameParts.join(' ');
+      el.innerHTML += `
+        <button class="sym-btn" onclick="selectSymptom('${s.id}')">
+          <span class="sym-icon">${icon}</span>
+          <span class="sym-name">${name}</span>
+        </button>`;
+    });
+    el.innerHTML += '</div>';
+  });
+}
+
+// ── 選擇症狀 ──────────────────────────────────────────────────
+function selectSymptom(id) {
+  const sym = SYMPTOMS.find(s => s.id === id);
+  if (!sym) return;
+  currentSymptom = sym;
+
+  if (!sym.followup) {
+    // 無追問，直接給結果
+    showResult(sym.grading(null), null, null);
+    return;
+  }
+
+  // 有追問
+  document.getElementById('fu-symptom-label').textContent = sym.label;
+  document.getElementById('fu-question').textContent =
+    (sym.preNote ? sym.preNote + '\n\n' : '') + sym.followup.question;
+
+  const opts = document.getElementById('fu-options');
+  opts.innerHTML = '';
+  sym.followup.options.forEach(opt => {
+    opts.innerHTML += `
+      <button class="opt-btn" onclick="selectFollowup('${opt.value}', '${opt.label.replace(/'/g,"\\'")}')">
+        ${opt.label}
+      </button>`;
+  });
+
+  showScreen('followup');
+}
+
+// ── 追問回答 ──────────────────────────────────────────────────
+async function selectFollowup(value, label) {
+  const level = currentSymptom.grading(value);
+  await showResult(level, currentSymptom.followup.key, label);
+}
+
+// ── 顯示結果 ──────────────────────────────────────────────────
+async function showResult(level, followupKey, followupAnswer) {
+  const info = LEVEL_INFO[level];
+
+  document.getElementById('result-header').className = `result-header ${info.cls}`;
+  document.getElementById('result-level-label').textContent = info.label;
+  document.getElementById('result-title').textContent = info.title;
+  document.getElementById('result-msg').innerHTML =
+    info.msg.replace(/\n/g, '<br>');
+
+  // 個管師資料（Level 1/2 顯示）
+  const cmSection = document.getElementById('cm-section');
+  if (level <= 2) {
+    try {
+      const r = await fetch(`${GAS_URL}?action=getCM&userId=${userId}`);
+      const d = await r.json();
+      if (d.found) {
+        const cm = d.data;
+        document.getElementById('cm-card').innerHTML = `
+          <div class="cm-name">${cm.name}</div>
+          <div class="cm-info">📞 ${cm.phone}${cm.email ? '　✉️ ' + cm.email : ''}</div>
+          <div class="cm-actions">
+            <a class="cm-action-btn btn-call"  href="tel:${cm.phone.replace(/[^0-9+]/g,'')}">📞 電話</a>
+            <a class="cm-action-btn btn-sms"   href="sms:${cm.phone.replace(/[^0-9+]/g,'')}">💬 簡訊</a>
+            ${cm.email ? `<a class="cm-action-btn btn-email" href="mailto:${cm.email}">✉️ Email</a>` : ''}
+          </div>`;
+        cmSection.style.display = 'block';
+      } else {
+        cmSection.style.display = 'none';
+      }
+    } catch(e) { cmSection.style.display = 'none'; }
+  } else {
+    cmSection.style.display = 'none';
+  }
+
+  showScreen('result');
+
+  // 記錄 + 通知（背景執行）
+  const patient = await fetch(`${GAS_URL}?action=getPatient&userId=${userId}`).then(r=>r.json());
+  const pData = patient.data || {};
+
+  fetch(`${GAS_URL}?action=logSymptom&userId=${userId}` +
+    `&displayName=${encodeURIComponent(userProfile?.displayName||'')}` +
+    `&realName=${encodeURIComponent(pData.real_name||'')}` +
+    `&mrn=${encodeURIComponent(pData.mrn||'')}` +
+    `&symptomCat=${encodeURIComponent(currentSymptom.category)}` +
+    `&symptomId=${currentSymptom.id}` +
+    `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
+    `&followupKey=${encodeURIComponent(followupKey||'')}` +
+    `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
+    `&level=${level}`);
+
+  if (level <= 2) {
+    fetch(`${GAS_URL}?action=notifyCM&userId=${userId}` +
+      `&patientName=${encodeURIComponent(pData.real_name||userProfile?.displayName||'')}` +
+      `&mrn=${encodeURIComponent(pData.mrn||'')}` +
+      `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
+      `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
+      `&level=${level}`);
+  }
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

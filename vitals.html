@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>生命徵象記錄</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --navy:#1A3A5C; --navy2:#2D5F8A;
+  --red:#C0392B;  --rbg:#FDF0EE;
+  --ora:#D35400;  --obg:#FEF5EC;
+  --grn:#27AE60;  --gbg:#EBF9F1;
+  --gray:#F0F4F8; --bdr:#E2E8F0;
+  --txt:#1E293B;  --mut:#64748B;
+  --radius:14px;  --shadow:0 2px 16px rgba(26,58,92,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  background:var(--gray);color:var(--txt);min-height:100vh;}
+
+.header{background:var(--navy);padding:20px 20px 28px;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:40px;
+  background:var(--gray);border-radius:50% 50% 0 0/20px 20px 0 0;}
+.header-label{color:#7EB8E8;font-size:12px;letter-spacing:2px;}
+.header-title{color:#fff;font-size:22px;font-weight:700;margin-top:4px;}
+.header-sub{color:#AACCEE;font-size:13px;margin-top:4px;}
+
+.main{padding:12px 16px 40px;}
+
+/* 日期時間選擇 */
+.dt-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;margin-bottom:16px;}
+.dt-label{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:8px;}
+.dt-input{width:100%;border:2px solid var(--bdr);border-radius:10px;
+  padding:12px 14px;font-size:15px;color:var(--txt);}
+.dt-input:focus{outline:none;border-color:var(--navy);}
+
+/* 輸入卡片 */
+.vitals-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.vital-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;position:relative;overflow:hidden;}
+.vital-card.full{grid-column:1/-1;}
+.vital-icon{font-size:28px;margin-bottom:8px;}
+.vital-name{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:8px;}
+.vital-input{width:100%;border:2px solid var(--bdr);border-radius:10px;
+  padding:10px 12px;font-size:20px;font-weight:700;color:var(--navy);
+  text-align:center;-webkit-appearance:none;}
+.vital-input:focus{outline:none;border-color:var(--navy);}
+.vital-unit{font-size:12px;color:var(--mut);text-align:center;margin-top:6px;}
+.vital-range{font-size:11px;color:var(--mut);text-align:center;margin-top:3px;}
+
+/* 警示指示 */
+.vital-card.alert-l1{border:2px solid var(--red);background:var(--rbg);}
+.vital-card.alert-l1 .vital-name{color:var(--red);}
+.vital-card.alert-l2{border:2px solid var(--ora);background:var(--obg);}
+.vital-card.alert-l2 .vital-name{color:var(--ora);}
+.vital-card.alert-ok{border:2px solid var(--grn);}
+.vital-card.alert-ok .vital-name{color:var(--grn);}
+
+/* BP 特殊佈局 */
+.bp-row{display:flex;gap:8px;align-items:center;}
+.bp-sep{font-size:20px;color:var(--mut);font-weight:300;flex-shrink:0;}
+
+/* 備註 */
+.note-input{width:100%;border:2px solid var(--bdr);border-radius:10px;
+  padding:12px 14px;font-size:14px;color:var(--txt);resize:none;}
+.note-input:focus{outline:none;border-color:var(--navy);}
+
+/* 按鈕 */
+.btn-primary{background:var(--navy);color:#fff;border:none;border-radius:var(--radius);
+  padding:16px;font-size:15px;font-weight:700;cursor:pointer;width:100%;transition:opacity .2s;}
+.btn-primary:active{opacity:.85;}
+.btn-secondary{background:#fff;color:var(--navy);border:2px solid var(--navy);
+  border-radius:var(--radius);padding:14px;font-size:14px;font-weight:600;
+  cursor:pointer;width:100%;margin-top:10px;}
+
+/* 結果卡 */
+.result-card{border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.result-header{padding:20px;color:#fff;}
+.result-header.l1{background:var(--red);}
+.result-header.l2{background:var(--ora);}
+.result-header.ok{background:var(--grn);}
+.result-title{font-size:20px;font-weight:800;}
+.result-sub{font-size:13px;margin-top:6px;opacity:.85;}
+.result-body{background:#fff;padding:20px;}
+.alert-item{display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--bdr);}
+.alert-item:last-child{border-bottom:none;}
+.alert-badge{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;flex-shrink:0;}
+.ab-l1{background:var(--rbg);color:var(--red);}
+.ab-l2{background:var(--obg);color:var(--ora);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.summary-item{background:var(--gray);border-radius:10px;padding:12px;text-align:center;}
+.summary-val{font-size:20px;font-weight:800;color:var(--navy);}
+.summary-lbl{font-size:11px;color:var(--mut);margin-top:3px;}
+.summary-item.l1{background:var(--rbg);}.summary-item.l1 .summary-val{color:var(--red);}
+.summary-item.l2{background:var(--obg);}.summary-item.l2 .summary-val{color:var(--ora);}
+
+.loading{text-align:center;padding:60px 20px;color:var(--mut);}
+.spinner{width:36px;height:36px;border:3px solid var(--bdr);border-top-color:var(--navy);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.screen{display:none;}.screen.active{display:block;}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入中…</div></div>
+</div>
+
+<!-- 輸入頁 -->
+<div id="scr-input" class="screen">
+  <div class="header">
+    <div class="header-label">Vital Signs</div>
+    <div class="header-title">💓 生命徵象記錄</div>
+    <div class="header-sub">請填入量測數值，空白欄位將不記錄</div>
+  </div>
+  <div class="main">
+
+    <!-- 日期時間 -->
+    <div class="dt-card">
+      <div class="dt-label">📅 量測日期與時間</div>
+      <input class="dt-input" type="datetime-local" id="recorded-at">
+    </div>
+
+    <!-- 血壓 -->
+    <div class="vitals-grid">
+      <div class="vital-card full" id="card-bp">
+        <div class="vital-icon">🩺</div>
+        <div class="vital-name">血壓 Blood Pressure</div>
+        <div class="bp-row">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:11px;color:var(--mut);margin-bottom:6px">收縮壓 Systolic</div>
+            <input class="vital-input" type="number" id="sbp" placeholder="—"
+              min="0" max="300" oninput="checkAlert('sbp',this.value)">
+          </div>
+          <div class="bp-sep">/</div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:11px;color:var(--mut);margin-bottom:6px">舒張壓 Diastolic</div>
+            <input class="vital-input" type="number" id="dbp" placeholder="—" min="0" max="200">
+          </div>
+        </div>
+        <div class="vital-unit">mmHg</div>
+        <div class="vital-range" id="range-sbp">警示：收縮壓 ≥160 或 ≤90 → 第二級　≥180 或 ≤80 → 第一級</div>
+      </div>
+
+      <!-- 心跳 -->
+      <div class="vital-card" id="card-hr">
+        <div class="vital-icon">❤️</div>
+        <div class="vital-name">心跳 Heart Rate</div>
+        <input class="vital-input" type="number" id="hr" placeholder="—"
+          min="0" max="300" oninput="checkAlert('hr',this.value)">
+        <div class="vital-unit">bpm</div>
+        <div class="vital-range">≥110 或 ≤50 → 第二級</div>
+      </div>
+
+      <!-- 體溫 -->
+      <div class="vital-card" id="card-temp">
+        <div class="vital-icon">🌡️</div>
+        <div class="vital-name">體溫 Temperature</div>
+        <input class="vital-input" type="number" id="temp" placeholder="—"
+          min="30" max="45" step="0.1" oninput="checkAlert('temp',this.value)">
+        <div class="vital-unit">°C</div>
+        <div class="vital-range">≥37.5 → 第二級　≥38.0 → 第一級</div>
+      </div>
+
+      <!-- 體重 -->
+      <div class="vital-card" id="card-weight">
+        <div class="vital-icon">⚖️</div>
+        <div class="vital-name">體重 Weight</div>
+        <input class="vital-input" type="number" id="weight" placeholder="—"
+          min="0" max="300" step="0.1">
+        <div class="vital-unit">kg</div>
+        <div class="vital-range" style="color:transparent">—</div>
+      </div>
+
+      <!-- 血糖 -->
+      <div class="vital-card full" id="card-glu">
+        <div class="vital-icon">🩸</div>
+        <div class="vital-name">血糖 Blood Glucose</div>
+        <input class="vital-input" type="number" id="glucose" placeholder="—"
+          min="0" max="600" oninput="checkAlert('glu',this.value)"
+          style="max-width:200px;margin:0 auto;display:block">
+        <div class="vital-unit">mg/dL</div>
+        <div class="vital-range">≥300 或 ≤70 → 第二級　≥400 或 ≤50 → 第一級</div>
+      </div>
+
+      <!-- 備註 -->
+      <div class="vital-card full">
+        <div class="vital-icon">📝</div>
+        <div class="vital-name">備註 Note</div>
+        <textarea class="note-input" id="note" rows="2"
+          placeholder="如：飯前血糖、服藥後量測…"></textarea>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitVitals()">
+      💾 儲存記錄
+    </button>
+  </div>
+</div>
+
+<!-- 結果頁 -->
+<div id="scr-result" class="screen">
+  <div class="header">
+    <div class="header-label">Result</div>
+    <div class="header-title">📋 記錄結果</div>
+  </div>
+  <div class="main">
+    <div class="result-card">
+      <div class="result-header" id="result-header">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-sub" id="result-sub"></div>
+      </div>
+      <div class="result-body">
+        <div id="result-alerts"></div>
+        <div class="summary-grid" id="result-summary"></div>
+      </div>
+    </div>
+    <button class="btn-primary" style="margin-top:20px" onclick="resetForm()">
+      ➕ 繼續記錄
+    </button>
+    <button class="btn-secondary" onclick="liff.closeWindow()">✓ 完成</button>
+  </div>
+</div>
+
+<script>
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';  // ← 填入
+const LIFF_ID  = '2010034796-J1whLo0G'; // ← 填入
+
+// 警示閾值
+const THRESHOLDS = {
+  sbp:  { l1_hi:180, l1_lo:80,  l2_hi:160, l2_lo:90  },
+  hr:   { l1_hi:130, l1_lo:40,  l2_hi:110, l2_lo:50  },
+  temp: { l1_hi:38.0,l1_lo:null,l2_hi:37.5,l2_lo:null },
+  glu:  { l1_hi:400, l1_lo:50,  l2_hi:300, l2_lo:70  },
+};
+
+let userId = '';
+
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    // 設定預設時間為現在
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('recorded-at').value = now.toISOString().slice(0,16);
+
+    showScreen('input');
+  } catch(e) {
+    document.querySelector('.loading div:last-child').textContent = '載入失敗：' + e.message;
+  }
+}
+
+// 即時警示檢查（輸入時改變卡片顏色）
+function checkAlert(key, val) {
+  const n = parseFloat(val);
+  const cardMap = { sbp:'card-bp', hr:'card-hr', temp:'card-temp', glu:'card-glu' };
+  const card = document.getElementById(cardMap[key]);
+  if (!card) return;
+  card.classList.remove('alert-l1','alert-l2','alert-ok');
+  if (!val || isNaN(n)) return;
+  const t = THRESHOLDS[key];
+  if ((t.l1_hi && n >= t.l1_hi) || (t.l1_lo && n <= t.l1_lo)) {
+    card.classList.add('alert-l1');
+  } else if ((t.l2_hi && n >= t.l2_hi) || (t.l2_lo && n <= t.l2_lo)) {
+    card.classList.add('alert-l2');
+  } else {
+    card.classList.add('alert-ok');
+  }
+}
+
+async function submitVitals() {
+  const sbp     = document.getElementById('sbp').value;
+  const dbp     = document.getElementById('dbp').value;
+  const hr      = document.getElementById('hr').value;
+  const temp    = document.getElementById('temp').value;
+  const weight  = document.getElementById('weight').value;
+  const glucose = document.getElementById('glucose').value;
+  const note    = document.getElementById('note').value;
+  const recAt   = document.getElementById('recorded-at').value;
+
+  // 至少要有一個數值
+  if (!sbp && !dbp && !hr && !temp && !weight && !glucose) {
+    alert('請至少填入一個數值');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = '儲存中…';
+  btn.disabled = true;
+
+  try {
+    const url = GAS_URL +
+      '?action=saveVitals' +
+      '&userId=' + encodeURIComponent(userId) +
+      '&recordedAt=' + encodeURIComponent(recAt) +
+      '&sbp='    + encodeURIComponent(sbp) +
+      '&dbp='    + encodeURIComponent(dbp) +
+      '&hr='     + encodeURIComponent(hr) +
+      '&temp='   + encodeURIComponent(temp) +
+      '&weight=' + encodeURIComponent(weight) +
+      '&glucose='+ encodeURIComponent(glucose) +
+      '&note='   + encodeURIComponent(note);
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.ok) {
+      alert('儲存失敗：' + (data.error||'請重試'));
+      return;
+    }
+
+    // 顯示結果
+    showResult(data, { sbp, dbp, hr, temp, weight, glucose, recAt });
+
+  } catch(e) {
+    alert('儲存失敗：' + e.message);
+  } finally {
+    btn.textContent = '💾 儲存記錄';
+    btn.disabled = false;
+  }
+}
+
+function showResult(data, vals) {
+  const level = data.level || 0;
+  const alerts = data.alerts || [];
+
+  // Header
+  const hdr = document.getElementById('result-header');
+  const title = document.getElementById('result-title');
+  const sub   = document.getElementById('result-sub');
+  hdr.className = 'result-header ' + (level===1?'l1':level===2?'l2':'ok');
+
+  if (level === 1) {
+    title.textContent = '🚨 第一級警示：請立即聯絡個管師';
+    sub.textContent   = '數值超出安全範圍，個管師已收到通知。';
+  } else if (level === 2) {
+    title.textContent = '⚠️ 第二級警示：請告知個管師';
+    sub.textContent   = '數值略有異常，個管師已收到通知。';
+  } else {
+    title.textContent = '✅ 記錄成功';
+    sub.textContent   = '數值在正常範圍內，繼續保持！';
+  }
+
+  // 警示列表
+  const alertEl = document.getElementById('result-alerts');
+  if (alerts.length > 0) {
+    alertEl.innerHTML = alerts.map(a => `
+      <div class="alert-item">
+        <div class="alert-badge ${a.level===1?'ab-l1':'ab-l2'}">${a.level===1?'🚨 第一級':'⚠️ 第二級'}</div>
+        <div style="font-size:14px;font-weight:700">${a.label}：${a.val} ${a.unit}</div>
+      </div>`).join('');
+  } else {
+    alertEl.innerHTML = '';
+  }
+
+  // 數值摘要
+  const items = [
+    {k:'sbp',    v:vals.sbp,     label:'收縮壓',  unit:'mmHg'},
+    {k:'dbp',    v:vals.dbp,     label:'舒張壓',  unit:'mmHg'},
+    {k:'hr',     v:vals.hr,      label:'心跳',    unit:'bpm'},
+    {k:'temp',   v:vals.temp,    label:'體溫',    unit:'°C'},
+    {k:'weight', v:vals.weight,  label:'體重',    unit:'kg'},
+    {k:'glu',    v:vals.glucose, label:'血糖',    unit:'mg/dL'},
+  ].filter(i => i.v);
+
+  const alertKeys = alerts.map(a => a.key);
+  document.getElementById('result-summary').innerHTML = items.map(i => {
+    const lv = alerts.find(a => a.key===i.k);
+    const cls = lv ? (lv.level===1?'l1':'l2') : '';
+    return `<div class="summary-item ${cls}">
+      <div class="summary-val">${i.v}</div>
+      <div class="summary-lbl">${i.label} ${i.unit}</div>
+    </div>`;
+  }).join('');
+
+  showScreen('result');
+}
+
+function resetForm() {
+  ['sbp','dbp','hr','temp','weight','glucose','note'].forEach(id =>
+    document.getElementById(id).value = '');
+  ['card-bp','card-hr','card-temp','card-glu'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) c.classList.remove('alert-l1','alert-l2','alert-ok');
+  });
+  // 重設時間為現在
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('recorded-at').value = now.toISOString().slice(0,16);
+  showScreen('input');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

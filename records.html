@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>我的記錄</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --navy: #1A3A5C;
@@ -169,6 +170,34 @@
   }
   .toast.show { opacity: 1; }
 
+  /* Tab 切換 */
+  .tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:16px; }
+  .tab-btn { flex:1; padding:12px 8px; font-size:14px; font-weight:600;
+    color:var(--muted); background:none; border:none; cursor:pointer;
+    border-bottom:3px solid transparent; margin-bottom:-2px; transition:.2s; }
+  .tab-btn.active { color:var(--navy); border-bottom-color:var(--navy); }
+
+  /* 趨勢圖 */
+  .chart-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px; margin-bottom:16px; }
+  .chart-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .chart-tab { padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+    border:2px solid var(--border); background:var(--gray); color:var(--muted); cursor:pointer; }
+  .chart-tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  /* 生命徵象列表 */
+  .vlist { display:flex; flex-direction:column; gap:8px; }
+  .vitem { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 16px; }
+  .vitem-time { font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .vgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .vcell { text-align:center; background:var(--gray); border-radius:8px; padding:8px 4px; }
+  .vcell-val { font-size:16px; font-weight:700; color:var(--navy); }
+  .vcell-val.alert-l1 { color:var(--red); }
+  .vcell-val.alert-l2 { color:var(--orange); }
+  .vcell-lbl { font-size:10px; color:var(--muted); margin-top:2px; }
+  .vcell.empty-cell { opacity:.35; }
+
   .loading {
     text-align: center; padding: 80px 20px; color: var(--muted);
   }
@@ -191,7 +220,12 @@
   <div class="header-sub" id="header-sub">載入中…</div>
 </div>
 
-<div class="main" id="main-content">
+<div class="main">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-sym" onclick="switchTab('sym')">💊 症狀記錄</button>
+    <button class="tab-btn" id="tab-vit" onclick="switchTab('vit')">💓 生命徵象</button>
+  </div>
+  <div id="main-content">
   <div class="loading">
     <div class="spinner"></div>
     <div>載入中…</div>
@@ -202,7 +236,7 @@
 
 <script>
 let userId = '';
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 填入 GAS 部署網址
+let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 部署後填入
 let profileData = {};
 
 const LEVEL_INFO = {
@@ -216,7 +250,6 @@ async function init() {
   if (!liff.isLoggedIn()) { liff.login(); return; }
   const profile = await liff.getProfile();
   userId = profile.userId;
-
   await loadAll();
 }
 
@@ -234,6 +267,11 @@ async function loadAll() {
       profileData.real_name ? `${profileData.real_name} 的記錄` : '症狀回報記錄';
 
     renderPage(logs, profileData);
+    // 初始化 vitals section
+    if (!document.getElementById('section-vit')) {
+      const mainEl = document.getElementById('main-content');
+      mainEl.insertAdjacentHTML('beforeend', '<div id="section-vit" style="display:none"></div>');
+    }
   } catch(e) {
     document.getElementById('main-content').innerHTML =
       '<div class="loading"><div>載入失敗，請重試</div></div>';
@@ -278,7 +316,11 @@ function renderPage(logs, patient) {
   const realName = patient.real_name || '';
   const mrn      = patient.mrn || '';
 
-  document.getElementById('main-content').innerHTML = `
+  // 確保 section-sym 存在
+  if (!document.getElementById('section-sym')) {
+    document.getElementById('main-content').innerHTML = '<div id="section-sym"></div><div id="section-vit" style="display:none"></div>';
+  }
+  document.getElementById('section-sym').innerHTML = `
     <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card">
@@ -390,6 +432,140 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+// ════ 生命徵象 ════
+let vitalsData = [];
+let vChart = null;
+let activeChartKey = 'sbp';
+
+const CHART_ITEMS = [
+  { key:'sbp',    label:'收縮壓', unit:'mmHg', color:'#C0392B', l1_hi:180,l1_lo:80, l2_hi:160,l2_lo:90 },
+  { key:'dbp',    label:'舒張壓', unit:'mmHg', color:'#E74C3C', l1_hi:null,l1_lo:null,l2_hi:null,l2_lo:null },
+  { key:'hr',     label:'心跳',   unit:'bpm',  color:'#E91E8C', l1_hi:130,l1_lo:40,l2_hi:110,l2_lo:50 },
+  { key:'temp',   label:'體溫',   unit:'°C',   color:'#D35400', l1_hi:38.0,l1_lo:null,l2_hi:37.5,l2_lo:null },
+  { key:'weight', label:'體重',   unit:'kg',   color:'#2D5F8A', l1_hi:null,l1_lo:null,l2_hi:null,l2_lo:null },
+  { key:'glucose',label:'血糖',   unit:'mg/dL',color:'#8E44AD', l1_hi:400,l1_lo:50,l2_hi:300,l2_lo:70 },
+];
+
+function switchTab(tab) {
+  document.getElementById('tab-sym').classList.toggle('active', tab==='sym');
+  document.getElementById('tab-vit').classList.toggle('active', tab==='vit');
+  document.getElementById('section-sym').style.display = tab==='sym'?'block':'none';
+  document.getElementById('section-vit').style.display = tab==='vit'?'block':'none';
+  if (tab==='vit' && vitalsData.length===0) loadVitals();
+}
+
+async function loadVitals() {
+  const el = document.getElementById('section-vit');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><div>載入中…</div></div>';
+  try {
+    const r = await fetch(`${GAS_URL}?action=getVitals&userId=${userId}`);
+    const d = await r.json();
+    vitalsData = d.data || [];
+    renderVitals();
+  } catch(e) {
+    el.innerHTML = '<div class="loading"><div>載入失敗，請重試</div></div>';
+  }
+}
+
+function getAlertClass(key, val) {
+  if (!val || val === '') return '';
+  const item = CHART_ITEMS.find(i => i.key === key);
+  if (!item || !item.l1_hi) return '';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '';
+  if ((item.l1_hi && n >= item.l1_hi)||(item.l1_lo && n <= item.l1_lo)) return 'alert-l1';
+  if ((item.l2_hi && n >= item.l2_hi)||(item.l2_lo && n <= item.l2_lo)) return 'alert-l2';
+  return '';
+}
+
+function renderVitals() {
+  const el = document.getElementById('section-vit');
+  if (!vitalsData.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">尚無生命徵象記錄<br>請點選「💓 生命徵象」按鈕輸入數值</div>';
+    return;
+  }
+
+  const chartTabsHtml = CHART_ITEMS.map(i =>
+    `<button class="chart-tab${i.key===activeChartKey?' active':''}" onclick="switchChart('${i.key}')">${i.label}</button>`
+  ).join('');
+
+  const listHtml = vitalsData.map(v => {
+    const cells = [
+      {key:'sbp',val:v.sbp,label:'收縮壓'},{key:'dbp',val:v.dbp,label:'舒張壓'},
+      {key:'hr',val:v.hr,label:'心跳'},{key:'temp',val:v.temp,label:'體溫'},
+      {key:'weight',val:v.weight,label:'體重'},{key:'glucose',val:v.glucose,label:'血糖'},
+    ];
+    const cellsHtml = cells.map(c => {
+      if (!c.val||c.val==='') return `<div class="vcell empty-cell"><div class="vcell-val">—</div><div class="vcell-lbl">${c.label}</div></div>`;
+      const ac = getAlertClass(c.key, c.val);
+      return `<div class="vcell${ac?' '+ac:''}"><div class="vcell-val">${c.val}</div><div class="vcell-lbl">${c.label}</div></div>`;
+    }).join('');
+    const ts = String(v.recorded_at||v.saved_at||'').slice(0,16);
+    return `<div class="vitem">
+      <div class="vitem-time">🕐 ${ts}</div>
+      <div class="vgrid">${cellsHtml}</div>
+      ${v.note?`<div style="font-size:12px;color:var(--muted);margin-top:8px">📝 ${v.note}</div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="chart-card">
+      <div class="chart-tabs">${chartTabsHtml}</div>
+      <canvas id="vitals-chart" height="200"></canvas>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 8px">
+      📊 最近 ${vitalsData.length} 筆（依時間倒序）
+    </div>
+    <div class="vlist">${listHtml}</div>`;
+
+  drawChart(activeChartKey);
+}
+
+function switchChart(key) {
+  activeChartKey = key;
+  document.querySelectorAll('.chart-tab').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick') === `switchChart('${key}')`);
+  });
+  drawChart(key);
+}
+
+function drawChart(key) {
+  const item = CHART_ITEMS.find(i => i.key === key);
+  if (!item) return;
+  const canvas = document.getElementById('vitals-chart');
+  if (!canvas) return;
+  const pts = vitalsData
+    .filter(v => v[key] && v[key]!=='')
+    .sort((a,b) => String(a.recorded_at||a.saved_at).localeCompare(String(b.recorded_at||b.saved_at)));
+  if (vChart) { vChart.destroy(); vChart = null; }
+  const labels = pts.map(v => String(v.recorded_at||v.saved_at||'').slice(5,16));
+  const values = pts.map(v => parseFloat(v[key]));
+  vChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: `${item.label} (${item.unit})`,
+        data: values,
+        borderColor: item.color,
+        backgroundColor: item.color + '20',
+        pointBackgroundColor: values.map(v => {
+          if (item.l1_hi&&(v>=item.l1_hi||(item.l1_lo&&v<=item.l1_lo))) return '#C0392B';
+          if (item.l2_hi&&(v>=item.l2_hi||(item.l2_lo&&v<=item.l2_lo))) return '#D35400';
+          return item.color;
+        }),
+        pointRadius: 5, tension: 0.3, fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${item.label}: ${ctx.raw} ${item.unit}`}} },
+      scales: { y:{ title:{display:true,text:item.unit} } }
+    }
+  });
 }
 
 init().catch(console.error);

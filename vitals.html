@@ -248,10 +248,11 @@ async function init() {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    // 設定預設時間為現在
+    // 設定預設時間為現在（台北時區）
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('recorded-at').value = now.toISOString().slice(0,16);
+    const tzOffset = 8 * 60; // UTC+8
+    const localNow = new Date(now.getTime() + tzOffset * 60000);
+    document.getElementById('recorded-at').value = localNow.toISOString().slice(0,16);
 
     showScreen('input');
   } catch(e) {
@@ -285,7 +286,8 @@ async function submitVitals() {
   const weight  = document.getElementById('weight').value;
   const glucose = document.getElementById('glucose').value;
   const note    = document.getElementById('note').value;
-  const recAt   = document.getElementById('recorded-at').value;
+  // datetime-local 格式是 "2026-05-16T23:12"，轉成 "2026-05-16 23:12"
+  const recAt = document.getElementById('recorded-at').value.replace('T', ' ');
 
   // 至少要有一個數值
   if (!sbp && !dbp && !hr && !temp && !weight && !glucose) {
@@ -392,10 +394,11 @@ function resetForm() {
     const c = document.getElementById(id);
     if (c) c.classList.remove('alert-l1','alert-l2','alert-ok');
   });
-  // 重設時間為現在
+  // 重設時間為現在（台北時區）
   const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('recorded-at').value = now.toISOString().slice(0,16);
+  const tzOffset = 8 * 60;
+  const localNow = new Date(now.getTime() + tzOffset * 60000);
+  document.getElementById('recorded-at').value = localNow.toISOString().slice(0,16);
   showScreen('input');
 }
 

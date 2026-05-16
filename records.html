@@ -202,7 +202,7 @@
 
 <script>
 let userId = '';
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 部署後填入
+let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 填入 GAS 部署網址
 let profileData = {};
 
 const LEVEL_INFO = {
@@ -212,7 +212,7 @@ const LEVEL_INFO = {
 };
 
 async function init() {
-  await liff.init({ liffId: 'YOUR_LIFF_ID_RECORDS' }); // ← 填入
+  await liff.init({ liffId: '2010034796-FdmhTXPK' }); // ← 填入
   if (!liff.isLoggedIn()) { liff.login(); return; }
   const profile = await liff.getProfile();
   userId = profile.userId;

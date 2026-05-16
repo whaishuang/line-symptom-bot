@@ -234,7 +234,8 @@
 <div id="screen-loading" class="screen active">
   <div class="loading">
     <div class="spinner"></div>
-    <div>載入中…</div>
+    <div id="debug-status">初始化中…</div>
+    <div id="debug-log" style="margin-top:16px;font-size:11px;color:#aaa;text-align:left;max-width:300px;word-break:break-all;"></div>
   </div>
 </div>
 
@@ -322,34 +323,55 @@ let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-Je
 let hasCM = false;
 let cmData = null;
 
+function debugLog(msg) {
+  console.log(msg);
+  const el = document.getElementById('debug-status');
+  const log = document.getElementById('debug-log');
+  if (el) el.textContent = msg;
+  if (log) log.innerHTML += msg + '<br>';
+}
+
 async function init() {
   try {
-    // Step 1：先從 URL 參數拿 userId（Bot 按鈕跳轉過來時會帶）
+    debugLog('Step 1: 讀取 URL 參數…');
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('userId');
+    debugLog('URL userId: ' + (urlUserId || '無'));
 
-    // Step 2：初始化 LIFF
+    debugLog('Step 2: 初始化 LIFF…');
     await liff.init({ liffId: 'YOUR_LIFF_ID_CONTACT' }); // ← 填入 LIFF ID
-    if (!liff.isLoggedIn()) { liff.login(); return; }
+    debugLog('LIFF 初始化完成');
 
-    // Step 3：決定 userId — URL 帶過來的優先，否則用 LIFF profile
+    if (!liff.isLoggedIn()) {
+      debugLog('未登入，跳轉登入…');
+      liff.login();
+      return;
+    }
+    debugLog('已登入');
+
     if (urlUserId) {
       userId = urlUserId;
+      debugLog('使用 URL userId: ' + userId);
     } else {
+      debugLog('Step 3: 取得 LIFF profile…');
       const profile = await liff.getProfile();
       userId = profile.userId;
+      debugLog('LIFF userId: ' + userId);
     }
 
     if (!userId) {
+      debugLog('錯誤：無法取得 userId');
       document.getElementById('header-sub').textContent = '無法取得用戶資料';
       showScreen('edit');
       return;
     }
 
+    debugLog('Step 4: 呼叫 loadCM…');
     await loadCM();
 
   } catch(e) {
-    document.getElementById('header-sub').textContent = '初始化失敗，請重新開啟';
+    debugLog('錯誤：' + e.message);
+    document.getElementById('header-sub').textContent = '初始化失敗：' + e.message;
     showScreen('edit');
     console.error(e);
   }

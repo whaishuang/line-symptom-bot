@@ -318,28 +318,54 @@
 
 <script>
 let userId = '';
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 部署後填入
+let GAS_URL = 'YOUR_GAS_EXEC_URL'; // ← 填入 GAS 部署網址
 let hasCM = false;
 let cmData = null;
 
 async function init() {
-  await liff.init({ liffId: 'YOUR_LIFF_ID_CONTACT' }); // ← 填入
-  if (!liff.isLoggedIn()) { liff.login(); return; }
+  try {
+    // Step 1：先從 URL 參數拿 userId（Bot 按鈕跳轉過來時會帶）
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUserId = urlParams.get('userId');
 
-  const profile = await liff.getProfile();
-  userId = profile.userId;
+    // Step 2：初始化 LIFF
+    await liff.init({ liffId: 'YOUR_LIFF_ID_CONTACT' }); // ← 填入 LIFF ID
+    if (!liff.isLoggedIn()) { liff.login(); return; }
 
-  // 從 URL 參數也可以取得 userId（從 LINE Bot 跳轉過來時）
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('userId')) userId = urlParams.get('userId');
+    // Step 3：決定 userId — URL 帶過來的優先，否則用 LIFF profile
+    if (urlUserId) {
+      userId = urlUserId;
+    } else {
+      const profile = await liff.getProfile();
+      userId = profile.userId;
+    }
 
-  await loadCM();
+    if (!userId) {
+      document.getElementById('header-sub').textContent = '無法取得用戶資料';
+      showScreen('edit');
+      return;
+    }
+
+    await loadCM();
+
+  } catch(e) {
+    document.getElementById('header-sub').textContent = '初始化失敗，請重新開啟';
+    showScreen('edit');
+    console.error(e);
+  }
 }
 
 async function loadCM() {
   showScreen('loading');
   try {
-    const r = await fetch(`${GAS_URL}?action=getCM&userId=${userId}`);
+    // 設定 10 秒 timeout 避免無限等待
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+
+    const r = await fetch(`${GAS_URL}?action=getCM&userId=${userId}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timer);
     const d = await r.json();
 
     if (d.found) {
@@ -354,7 +380,10 @@ async function loadCM() {
       showScreen('edit');
     }
   } catch(e) {
-    document.getElementById('header-sub').textContent = '載入失敗，請重試';
+    const msg = e.name === 'AbortError' ? '載入逾時，請重新開啟' : '載入失敗：' + e.message;
+    document.getElementById('header-sub').textContent = msg;
+    document.getElementById('edit-title').textContent = '✏️ 輸入個管師資料';
+    document.getElementById('cancel-btn').style.display = 'none';
     showScreen('edit');
   }
 }

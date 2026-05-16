@@ -158,7 +158,7 @@
   }
   .action-btn:active { opacity: 0.8; }
   .btn-call  { background: var(--navy); color: #fff; }
-
+  .btn-sms   { background: #E8F8EE; color: #1a7a40; }
   .btn-email { background: #EBF5FB; color: var(--navy-light); }
 
   /* Buttons */
@@ -268,7 +268,7 @@
       </div>
       <div class="action-row">
         <a class="action-btn btn-call"  id="btn-call"  href="#">📞 打電話</a>
-
+        <a class="action-btn btn-sms"   id="btn-sms"   href="#">💬 簡訊</a>
         <a class="action-btn btn-email" id="btn-email" href="#">✉️ Email</a>
       </div>
       <button class="btn-edit" onclick="showScreen('edit')">✏️ 修改個管師資料</button>
@@ -416,8 +416,8 @@ function showCMData(cm) {
   document.getElementById('view-phone').textContent = cm.phone;
 
   const phone = cm.phone.replace(/[^0-9+]/g, '');
-  document.getElementById('btn-call').href  = `tel:${phone}`;
-
+  document.getElementById('btn-call').href = `tel:${phone}`;
+  document.getElementById('btn-sms').href  = `sms:${phone}`;
 
   if (cm.email) {
     document.getElementById('view-email').textContent = cm.email;

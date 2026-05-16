@@ -158,7 +158,7 @@
   }
   .action-btn:active { opacity: 0.8; }
   .btn-call  { background: var(--navy); color: #fff; }
-  .btn-sms   { background: #EBF5FB; color: var(--navy-light); }
+
   .btn-email { background: #EBF5FB; color: var(--navy-light); }
 
   /* Buttons */
@@ -267,7 +267,7 @@
       </div>
       <div class="action-row">
         <a class="action-btn btn-call"  id="btn-call"  href="#">📞 打電話</a>
-        <a class="action-btn btn-sms"   id="btn-sms"   href="#">💬 簡訊</a>
+
         <a class="action-btn btn-email" id="btn-email" href="#">✉️ Email</a>
       </div>
       <button class="btn-edit" onclick="showScreen('edit')">✏️ 修改個管師資料</button>
@@ -318,12 +318,12 @@
 
 <script>
 let userId = '';
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 部署後填入
+let GAS_URL = 'YOUR_GAS_EXEC_URL'; // ← 部署後填入
 let hasCM = false;
 let cmData = null;
 
 async function init() {
-  await liff.init({ liffId: '2010034796-HLZipXnc' }); // ← 填入
+  await liff.init({ liffId: 'YOUR_LIFF_ID_CONTACT' }); // ← 填入
   if (!liff.isLoggedIn()) { liff.login(); return; }
 
   const profile = await liff.getProfile();
@@ -366,7 +366,7 @@ function showCMData(cm) {
 
   const phone = cm.phone.replace(/[^0-9+]/g, '');
   document.getElementById('btn-call').href  = `tel:${phone}`;
-  document.getElementById('btn-sms').href   = `sms:${phone}`;
+
 
   if (cm.email) {
     document.getElementById('view-email').textContent = cm.email;

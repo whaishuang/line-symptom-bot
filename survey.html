@@ -184,13 +184,27 @@ async function init() {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    // 從 URL 取得參數
-    const params   = new URLSearchParams(liff.getDecodedIDToken ? window.location.search : location.search);
+    // 從 URL 取得參數（LIFF 環境下需要從 liff.getDecodedIDToken 之後的 URL 取得）
+    const rawSearch = window.location.search || location.search || '';
+    // LIFF 有時會把參數放在 hash 後面
+    const searchStr = rawSearch || (window.location.hash ? window.location.hash.replace(/^#/,'?') : '');
+    const params    = new URLSearchParams(searchStr);
     surveyId   = params.get('surveyId')   || '';
     responseId = params.get('responseId') || '';
 
+    // 若 search 沒有，嘗試從完整 URL 解析
     if (!surveyId || !responseId) {
-      showError('缺少問卷參數，請重新點選連結。');
+      const fullUrl = window.location.href;
+      const qIdx   = fullUrl.indexOf('?');
+      if (qIdx >= 0) {
+        const p2  = new URLSearchParams(fullUrl.slice(qIdx));
+        surveyId   = surveyId   || p2.get('surveyId')   || '';
+        responseId = responseId || p2.get('responseId') || '';
+      }
+    }
+
+    if (!surveyId || !responseId) {
+      showError('缺少問卷參數，請重新點選連結。\n(URL: ' + window.location.href.slice(0,100) + ')');
       return;
     }
 

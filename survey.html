@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>問卷填寫</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --navy:#1A3A5C; --navy2:#2D5F8A;
+  --red:#C0392B;  --grn:#27AE60;
+  --gray:#F0F4F8; --bdr:#E2E8F0;
+  --txt:#1E293B;  --mut:#64748B;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  background:var(--gray);color:var(--txt);min-height:100vh;
+  padding-bottom:100px;}
+
+/* Header */
+.header{background:var(--navy);padding:18px 20px 28px;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:40px;
+  background:var(--gray);border-radius:50% 50% 0 0/20px 20px 0 0;}
+.h-label{color:#7EB8E8;font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+.h-title{color:#fff;font-size:20px;font-weight:800;margin-top:4px;line-height:1.3;}
+.h-desc{color:#AACCEE;font-size:12px;margin-top:6px;line-height:1.5;}
+
+/* 進度條 */
+.progress-wrap{padding:20px 20px 0;}
+.progress-info{display:flex;justify-content:space-between;
+  font-size:12px;color:var(--mut);margin-bottom:6px;}
+.progress-bar{height:6px;background:var(--bdr);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .3s;}
+
+/* 問題卡片 */
+.q-wrap{padding:16px 16px 0;}
+.q-card{background:#fff;border-radius:var(--radius);padding:20px;
+  box-shadow:0 2px 12px rgba(26,58,92,.08);}
+.q-num{font-size:11px;font-weight:700;color:var(--navy);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.q-text{font-size:16px;font-weight:600;color:var(--txt);line-height:1.5;margin-bottom:20px;}
+.q-required{color:var(--red);margin-left:2px;}
+
+/* 選擇題 */
+.choices{display:flex;flex-direction:column;gap:8px;}
+.choice-btn{width:100%;padding:13px 16px;border:2px solid var(--bdr);
+  border-radius:10px;background:#fff;font-size:14px;color:var(--txt);
+  text-align:left;cursor:pointer;transition:.15s;line-height:1.4;}
+.choice-btn:active{transform:scale(.98);}
+.choice-btn.selected{background:var(--navy);color:#fff;border-color:var(--navy);}
+.choice-btn.selected:active{opacity:.85;}
+
+/* 評分題（滑桿） */
+.scale-wrap{padding:8px 0;}
+.scale-labels{display:flex;justify-content:space-between;
+  font-size:11px;color:var(--mut);margin-bottom:10px;}
+.scale-val{text-align:center;font-size:32px;font-weight:800;
+  color:var(--navy);margin:12px 0;}
+.scale-input{width:100%;-webkit-appearance:none;height:6px;
+  border-radius:3px;background:var(--bdr);outline:none;}
+.scale-input::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;
+  border-radius:50%;background:var(--navy);cursor:pointer;
+  box-shadow:0 2px 8px rgba(26,58,92,.3);}
+.scale-ticks{display:flex;justify-content:space-between;
+  font-size:10px;color:var(--mut);margin-top:6px;padding:0 2px;}
+
+/* 文字題 */
+.text-input{width:100%;border:2px solid var(--bdr);border-radius:10px;
+  padding:12px 14px;font-size:15px;min-height:100px;resize:vertical;
+  font-family:inherit;}
+.text-input:focus{outline:none;border-color:var(--navy);}
+
+/* 跳題提示 */
+.skip-notice{background:#EBF9F1;border:1px solid #A7F3D0;border-radius:10px;
+  padding:12px 16px;font-size:13px;color:#065F46;margin-bottom:12px;}
+
+/* 底部導覽 */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;
+  padding:12px 16px;border-top:1px solid var(--bdr);
+  display:flex;gap:10px;align-items:center;
+  box-shadow:0 -4px 20px rgba(0,0,0,.06);}
+.btn-prev{flex:0 0 auto;padding:12px 20px;border-radius:10px;
+  border:2px solid var(--bdr);background:#fff;color:var(--navy);
+  font-size:14px;font-weight:600;cursor:pointer;}
+.btn-next{flex:1;padding:13px;border-radius:10px;border:none;
+  background:var(--navy);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-next:disabled{opacity:.5;cursor:not-allowed;}
+.btn-next.submit{background:var(--grn);}
+
+/* 載入 */
+.loading{text-align:center;padding:60px 20px;color:var(--mut);}
+.spinner{width:36px;height:36px;border:3px solid var(--bdr);
+  border-top-color:var(--navy);border-radius:50%;
+  animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* 完成頁 */
+.done-wrap{padding:32px 20px;}
+.done-card{background:#fff;border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,.08);}
+.done-header{background:var(--grn);padding:24px;text-align:center;}
+.done-header h2{color:#fff;font-size:22px;font-weight:800;}
+.done-header p{color:rgba(255,255,255,.85);font-size:13px;margin-top:6px;}
+.done-body{padding:20px;}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.score-item{background:var(--gray);border-radius:10px;padding:14px;text-align:center;}
+.score-val{font-size:22px;font-weight:800;color:var(--navy);}
+.score-lbl{font-size:11px;color:var(--mut);margin-top:4px;}
+.score-item.highlight .score-val{color:var(--grn);}
+.btn-close{margin-top:20px;width:100%;padding:14px;border-radius:10px;
+  border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;}
+.btn-more{margin-top:10px;width:100%;padding:12px;border-radius:10px;
+  border:2px solid var(--navy);background:#fff;color:var(--navy);
+  font-size:14px;font-weight:600;cursor:pointer;}
+
+.screen{display:none;}.screen.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入問卷中…</div></div>
+</div>
+
+<div id="scr-survey" class="screen">
+  <div class="header">
+    <div class="h-label">Survey</div>
+    <div class="h-title" id="sv-title">問卷</div>
+    <div class="h-desc" id="sv-desc"></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="prog-text">第 1 題</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-bar" style="width:0%"></div></div>
+  </div>
+  <div class="q-wrap" id="q-wrap"></div>
+  <div class="nav-bar">
+    <button class="btn-prev" id="btn-prev" onclick="prevQ()">← 上一題</button>
+    <button class="btn-next" id="btn-next" onclick="nextQ()">下一題 →</button>
+  </div>
+</div>
+
+<div id="scr-done" class="screen">
+  <div class="done-wrap">
+    <div class="done-card">
+      <div class="done-header">
+        <h2>✅ 填寫完成！</h2>
+        <p id="done-subtitle">感謝您的填寫</p>
+      </div>
+      <div class="done-body">
+        <div id="done-score-section"></div>
+        <button class="btn-close" onclick="liff.closeWindow()">完成，關閉視窗</button>
+        <button class="btn-more" id="btn-next-survey" style="display:none"
+          onclick="loadNextSurvey()">繼續填寫下一份問卷 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';   // ← 填入
+const LIFF_ID   = '2010034796-wo9weGMs'; // ← 填入
+
+let userId      = '';
+let surveyId    = '';
+let responseId  = '';
+let allQuestions= [];
+let visibleQs   = [];   // 目前可見的題目（跳題後）
+let currentIdx  = 0;    // 在 visibleQs 的 index
+let answers     = {};   // { questionId: { raw, index } }
+let skipState   = {};   // 跳題控制欄位 { inpatient_status: 1 }
+let surveyTitle = '';
+
+// ════════════════════════════════════════════════════════════
+// 初始化
+// ════════════════════════════════════════════════════════════
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    // 從 URL 取得參數
+    const params   = new URLSearchParams(liff.getDecodedIDToken ? window.location.search : location.search);
+    surveyId   = params.get('surveyId')   || '';
+    responseId = params.get('responseId') || '';
+
+    if (!surveyId || !responseId) {
+      showError('缺少問卷參數，請重新點選連結。');
+      return;
+    }
+
+    await loadSurvey();
+  } catch(e) {
+    showError('初始化失敗：' + e.message);
+  }
+}
+
+async function loadSurvey() {
+  try {
+    const url = GAS_URL + '?action=getSurveyForm'
+      + '&surveyId='   + encodeURIComponent(surveyId)
+      + '&responseId=' + encodeURIComponent(responseId);
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.ok) { showError(data.error || '無法載入問卷'); return; }
+
+    surveyTitle  = data.title;
+    allQuestions = data.questions;
+
+    document.getElementById('sv-title').textContent = data.title;
+    document.getElementById('sv-desc').textContent  = data.description || '';
+
+    // 初始可見題目（排除 order=0 的跳題控制題外的所有題，但先全部顯示）
+    rebuildVisible();
+    showScreen('survey');
+    renderQ();
+  } catch(e) {
+    showError('載入失敗：' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 跳題邏輯
+// ════════════════════════════════════════════════════════════
+function rebuildVisible() {
+  visibleQs = allQuestions.filter(q => {
+    // order=0 是跳題控制題，一定顯示
+    if (q.order === 0) return true;
+    if (!q.skip_logic) return true;
+
+    // show_if 邏輯
+    const sl = q.skip_logic;
+    if (sl.show_if) {
+      const fieldVal = skipState[sl.show_if.field];
+      return fieldVal === sl.show_if.value;
+    }
+    return true;
+  });
+}
+
+function updateSkipState(q, answerIndex) {
+  if (q.subscale === '_skip_control' && q.skip_logic && q.skip_logic.field) {
+    const sv = q.score_values ? q.score_values[answerIndex] : answerIndex;
+    skipState[q.skip_logic.field] = sv;
+    rebuildVisible();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 題目渲染
+// ════════════════════════════════════════════════════════════
+function renderQ() {
+  if (!visibleQs.length) return;
+  const q   = visibleQs[currentIdx];
+  const tot = visibleQs.length;
+
+  // 進度
+  document.getElementById('prog-text').textContent = '第 ' + (currentIdx + 1) + ' 題，共 ' + tot + ' 題';
+  document.getElementById('prog-pct').textContent  = Math.round((currentIdx / tot) * 100) + '%';
+  document.getElementById('prog-bar').style.width  = (currentIdx / tot * 100) + '%';
+
+  // 按鈕
+  document.getElementById('btn-prev').style.display = currentIdx === 0 ? 'none' : '';
+  const isLast = currentIdx === tot - 1;
+  const btn    = document.getElementById('btn-next');
+  btn.textContent = isLast ? '✅ 送出問卷' : '下一題 →';
+  btn.className   = 'btn-next' + (isLast ? ' submit' : '');
+
+  const wrap = document.getElementById('q-wrap');
+  let html   = '<div class="q-card">';
+  html += '<div class="q-num">第 ' + (currentIdx + 1) + ' 題</div>';
+  html += '<div class="q-text">' + escHtml(q.question_zh);
+  if (q.required) html += '<span class="q-required">*</span>';
+  html += '</div>';
+
+  if (q.type === 'choice') {
+    html += renderChoice(q);
+  } else if (q.type === 'scale') {
+    html += renderScale(q);
+  } else if (q.type === 'text') {
+    html += renderText(q);
+  }
+
+  html += '</div>';
+  wrap.innerHTML = html;
+  window.scrollTo(0, 0);
+
+  // 恢復已選答案
+  restoreAnswer(q);
+}
+
+function renderChoice(q) {
+  const saved = answers[q.id];
+  let html = '<div class="choices">';
+  (q.options || []).forEach((opt, i) => {
+    const sel = saved && saved.index === i ? ' selected' : '';
+    html += `<button class="choice-btn${sel}" onclick="selectChoice('${q.id}',${i},this)">${escHtml(opt)}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderScale(q) {
+  const opts  = q.options || [];
+  const min   = 0;
+  const max   = opts.length > 0 ? opts.length - 1 : 10;
+  const saved = answers[q.id];
+  const val   = saved !== undefined ? saved.index : Math.floor((max - min) / 2);
+
+  let ticks = '<div class="scale-ticks">';
+  opts.forEach((o, i) => { ticks += '<span>' + (i + 1) + '</span>'; });
+  ticks += '</div>';
+
+  const leftLabel  = opts[0]  || '最低';
+  const rightLabel = opts[opts.length - 1] || '最高';
+
+  return `
+    <div class="scale-wrap">
+      <div class="scale-labels"><span>${escHtml(leftLabel)}</span><span>${escHtml(rightLabel)}</span></div>
+      <div class="scale-val" id="scale-val-${q.id}">${val + 1}</div>
+      <input type="range" class="scale-input" id="scale-${q.id}"
+        min="${min}" max="${max}" value="${val}"
+        oninput="onScale('${q.id}',this.value)">
+      ${ticks}
+    </div>`;
+}
+
+function renderText(q) {
+  const saved = answers[q.id];
+  const val   = saved ? escHtml(saved.raw) : '';
+  return `<textarea class="text-input" id="text-${q.id}"
+    placeholder="請輸入您的回答…" oninput="onText('${q.id}',this.value)">${val}</textarea>`;
+}
+
+function restoreAnswer(q) {
+  // Scale 預設選中間值（即使未回答也算有值）
+  if (q.type === 'scale') {
+    const opts = q.options || [];
+    const max  = opts.length > 0 ? opts.length - 1 : 10;
+    const saved = answers[q.id];
+    const val   = saved !== undefined ? saved.index : Math.floor(max / 2);
+    if (!answers[q.id]) {
+      answers[q.id] = { raw: (q.options||[])[val] || String(val + 1), index: val };
+    }
+    const el = document.getElementById('scale-' + q.id);
+    if (el) el.value = val;
+    const vl = document.getElementById('scale-val-' + q.id);
+    if (vl) vl.textContent = val + 1;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 使用者互動
+// ════════════════════════════════════════════════════════════
+function selectChoice(qId, idx, el) {
+  document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const q = visibleQs[currentIdx];
+  answers[qId] = { raw: (q.options || [])[idx] || '', index: idx };
+  updateSkipState(q, idx);
+  // 選擇題自動滾到下一題（延遲 300ms，讓病人看到選中效果）
+  if (!isLastQ()) {
+    setTimeout(() => nextQ(), 400);
+  }
+}
+
+function onScale(qId, val) {
+  const idx  = Number(val);
+  const q    = visibleQs[currentIdx];
+  const opts = q.options || [];
+  answers[qId] = { raw: opts[idx] || String(idx + 1), index: idx };
+  const vl = document.getElementById('scale-val-' + qId);
+  if (vl) vl.textContent = idx + 1;
+}
+
+function onText(qId, val) {
+  answers[qId] = { raw: val, index: 0 };
+}
+
+function isLastQ() { return currentIdx === visibleQs.length - 1; }
+
+function prevQ() {
+  if (currentIdx > 0) { currentIdx--; renderQ(); }
+}
+
+function nextQ() {
+  const q = visibleQs[currentIdx];
+
+  // 必填驗證
+  if (q.required && !answers[q.id] && q.type !== 'scale') {
+    showInlineError('此題為必填，請選擇或填寫後再繼續。');
+    return;
+  }
+
+  if (isLastQ()) {
+    submitSurvey();
+  } else {
+    currentIdx++;
+    renderQ();
+  }
+}
+
+function showInlineError(msg) {
+  const existing = document.querySelector('.inline-err');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'inline-err';
+  el.style.cssText = 'color:var(--red);font-size:13px;padding:8px 16px;text-align:center;';
+  el.textContent = msg;
+  document.getElementById('q-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// ════════════════════════════════════════════════════════════
+// 送出
+// ════════════════════════════════════════════════════════════
+async function submitSurvey() {
+  const btn = document.getElementById('btn-next');
+  btn.disabled = true;
+  btn.textContent = '送出中…';
+
+  // 整理答案
+  const answerList = visibleQs
+    .filter(q => answers[q.id] !== undefined)
+    .map(q => ({
+      questionId:  q.id,
+      answerRaw:   answers[q.id].raw,
+      answerIndex: answers[q.id].index,
+    }));
+
+  try {
+    const url = GAS_URL + '?action=submitSurvey'
+      + '&responseId='  + encodeURIComponent(responseId)
+      + '&surveyId='    + encodeURIComponent(surveyId)
+      + '&answers='     + encodeURIComponent(JSON.stringify(answerList))
+      + '&skipStatus='  + encodeURIComponent(JSON.stringify(skipState));
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.ok) { showError(data.error); return; }
+
+    showDone(data);
+  } catch(e) {
+    showError('送出失敗：' + e.message);
+    btn.disabled    = false;
+    btn.textContent = '✅ 送出問卷';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 完成頁
+// ════════════════════════════════════════════════════════════
+function showDone(data) {
+  document.getElementById('done-subtitle').textContent = '「' + surveyTitle + '」填寫完成';
+
+  const section = document.getElementById('done-score-section');
+  const subs    = data.subscale_scores || {};
+  const subKeys = Object.keys(subs);
+
+  if (subKeys.length === 0) {
+    section.innerHTML = '<p style="color:var(--mut);font-size:13px;text-align:center;margin-top:12px">您的回答已記錄，感謝填寫！</p>';
+  } else {
+    let html = '';
+    // 顯示總分（如果有）
+    if (data.total_score !== '' && data.total_score !== undefined) {
+      html += `<div style="text-align:center;margin:16px 0">
+        <div style="font-size:13px;color:var(--mut)">總分</div>
+        <div style="font-size:40px;font-weight:800;color:var(--navy)">${data.total_score}</div>
+      </div>`;
+    }
+    // 子量表分數
+    html += '<div class="score-grid">';
+    subKeys.forEach(k => {
+      const sub = subs[k];
+      const maxStr = sub.max ? ' / ' + sub.max : '';
+      html += `<div class="score-item">
+        <div class="score-val">${sub.score}${maxStr}</div>
+        <div class="score-lbl">${sub.name}</div>
+      </div>`;
+    });
+    html += '</div>';
+    section.innerHTML = html;
+  }
+
+  showScreen('done');
+}
+
+async function loadNextSurvey() {
+  // 看看還有沒有 pending 的問卷
+  const url = GAS_URL + '?action=getSurveys&userId=' + encodeURIComponent(userId);
+  const res  = await fetch(url);
+  const data = await res.json();
+  if (data.ok && data.hasPending && data.pending.length > 0) {
+    const next = data.pending[0];
+    surveyId   = next.survey_id;
+    responseId = next.response_id;
+    answers    = {};
+    skipState  = {};
+    currentIdx = 0;
+    showScreen('loading');
+    await loadSurvey();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 工具
+// ════════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showError(msg) {
+  document.getElementById('scr-loading').innerHTML =
+    `<div class="loading"><div style="font-size:32px;margin-bottom:12px">⚠️</div>
+     <div style="color:var(--red);font-size:15px;font-weight:700">${escHtml(msg)}</div>
+     <button onclick="liff.closeWindow()" style="margin-top:20px;padding:10px 24px;
+       border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:14px;cursor:pointer">
+       關閉
+     </button></div>`;
+  showScreen('loading');
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+init().catch(e => showError('系統錯誤：' + e.message));
+</script>
+</body>
+</html>

@@ -503,7 +503,7 @@ function renderVitals() {
       const ac = getAlertClass(c.key, c.val);
       return `<div class="vcell${ac?' '+ac:''}"><div class="vcell-val">${c.val}</div><div class="vcell-lbl">${c.label}</div></div>`;
     }).join('');
-    const ts = String(v.recorded_at||v.saved_at||'').replace('T',' ').slice(0,16);
+    const ts = String(v.recorded_at||v.saved_at||'').slice(0,16);
     return `<div class="vitem">
       <div class="vitem-time">🕐 ${ts}</div>
       <div class="vgrid">${cellsHtml}</div>
@@ -541,7 +541,7 @@ function drawChart(key) {
     .filter(v => v[key] && v[key]!=='')
     .sort((a,b) => String(a.recorded_at||a.saved_at).localeCompare(String(b.recorded_at||b.saved_at)));
   if (vChart) { vChart.destroy(); vChart = null; }
-  const labels = pts.map(v => String(v.recorded_at||v.saved_at||'').replace('T',' ').slice(5,16));
+  const labels = pts.map(v => String(v.recorded_at||v.saved_at||'').slice(5,16));
   const values = pts.map(v => parseFloat(v[key]));
   vChart = new Chart(canvas.getContext('2d'), {
     type: 'line',

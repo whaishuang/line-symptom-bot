@@ -87,6 +87,14 @@
   .sym-btn .sym-name { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.3; }
   .sym-btn.selected { border-color: var(--navy); background: var(--navy); }
   .sym-btn.selected .sym-name { color: #fff; }
+  .no-symptom-sym-btn {
+    grid-column: 1 / -1;       /* 橫跨全行 */
+    border-color: #27AE60;
+    padding: 18px 10px;
+  }
+  .no-symptom-sym-btn .sym-icon { font-size: 32px; }
+  .no-symptom-sym-btn .sym-name { font-size: 15px; color: var(--green); }
+  .no-symptom-sym-btn:active { background: #EBF9F1; }
 
   /* Followup */
   .screen { display: none; }
@@ -375,6 +383,7 @@ let userProfile = null;
 let currentSymptom = null;
 let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 填入 GAS 部署網址
 
+
 // ── 初始化 ───────────────────────────────────────────────────
 async function init() {
      await liff.init({ liffId: '2010034796-kIBFrrkM' }); // ← 填入
@@ -394,10 +403,13 @@ function renderSymptoms() {
 
   // 無特殊症狀：獨立渲染在最上面
   el.innerHTML += `
-    <button class="symptom-btn no-symptom-btn" onclick="selectSymptom('no_symptom')">
-      ✅ 今天沒有特殊症狀
-    </button>
-    <div style="font-size:12px;color:var(--muted);margin:12px 0 8px;font-weight:600;">
+    <div class="symptom-grid" style="margin-bottom:8px">
+      <button class="sym-btn no-symptom-sym-btn" onclick="selectSymptom('no_symptom')">
+        <span class="sym-icon">😊</span>
+        <span class="sym-name">無症狀</span>
+      </button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin:8px 0 8px;font-weight:600;letter-spacing:0.5px;">
       或選擇不適症狀：
     </div>`;
 
@@ -428,7 +440,7 @@ function selectSymptom(id) {
   // 無特殊症狀：直接送出，不進追問流程
   if (id === 'no_symptom') {
     currentSymptom = SYMPTOMS.find(s => s.id === 'no_symptom');
-    submitResult(null, null, 3);
+    showResult(3, null, null);
     return;
   }
   const sym = SYMPTOMS.find(s => s.id === id);

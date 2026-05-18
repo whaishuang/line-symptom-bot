@@ -389,18 +389,17 @@ async function init() {
 
 // ── 渲染症狀列表 ──────────────────────────────────────────────
 function renderSymptoms() {
+  const el = document.getElementById('symptom-list');
+  el.innerHTML = '';
+
   // 無特殊症狀：獨立渲染在最上面
-  const noSymBtn = document.createElement('div');
-  noSymBtn.innerHTML = `
+  el.innerHTML += `
     <button class="symptom-btn no-symptom-btn" onclick="selectSymptom('no_symptom')">
       ✅ 今天沒有特殊症狀
-    </button>`;
-  list.appendChild(noSymBtn);
-
-  const divider = document.createElement('div');
-  divider.style.cssText = 'font-size:12px;color:var(--muted);margin:12px 0 8px;font-weight:600;';
-  divider.textContent = '或選擇不適症狀：';
-  list.appendChild(divider);
+    </button>
+    <div style="font-size:12px;color:var(--muted);margin:12px 0 8px;font-weight:600;">
+      或選擇不適症狀：
+    </div>`;
 
   const categories = {};
   SYMPTOMS.forEach(s => {
@@ -409,8 +408,6 @@ function renderSymptoms() {
     categories[s.category].push(s);
   });
 
-  const el = document.getElementById('symptom-list');
-  el.innerHTML = '';
   Object.entries(categories).forEach(([cat, syms]) => {
     el.innerHTML += `<div class="cat-label">${cat}</div><div class="symptom-grid">`;
     syms.forEach(s => {

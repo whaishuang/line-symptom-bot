@@ -255,6 +255,10 @@
 <script>
 // ── 症狀資料 ─────────────────────────────────────────────────
 const SYMPTOMS = [
+  { id:'no_symptom', label:'✅ 無特殊症狀', category:'__no_symptom__',
+    preNote:'今天沒有不舒服',
+    followup: null,
+    grading: () => 3 },
   { id:'fever',        label:'🌡️ 發燒',      category:'感染／急症',
     preNote:'化療後任何發燒，或非化療期體溫 ≥38.3°C 持續超過 1 小時',
     followup:{ key:'chemo_timing', question:'請問您最近化療是什麼時候？',
@@ -373,7 +377,7 @@ let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-Je
 
 // ── 初始化 ───────────────────────────────────────────────────
 async function init() {
-  await liff.init({ liffId: '2010034796-kIBFrrkM' }); // ← 填入
+     await liff.init({ liffId: '2010034796-kIBFrrkM' }); // ← 填入
   if (!liff.isLoggedIn()) { liff.login(); return; }
   const profile = await liff.getProfile();
   userId = profile.userId;
@@ -385,8 +389,22 @@ async function init() {
 
 // ── 渲染症狀列表 ──────────────────────────────────────────────
 function renderSymptoms() {
+  // 無特殊症狀：獨立渲染在最上面
+  const noSymBtn = document.createElement('div');
+  noSymBtn.innerHTML = `
+    <button class="symptom-btn no-symptom-btn" onclick="selectSymptom('no_symptom')">
+      ✅ 今天沒有特殊症狀
+    </button>`;
+  list.appendChild(noSymBtn);
+
+  const divider = document.createElement('div');
+  divider.style.cssText = 'font-size:12px;color:var(--muted);margin:12px 0 8px;font-weight:600;';
+  divider.textContent = '或選擇不適症狀：';
+  list.appendChild(divider);
+
   const categories = {};
   SYMPTOMS.forEach(s => {
+    if (s.category === '__no_symptom__') return; // 已單獨處理
     if (!categories[s.category]) categories[s.category] = [];
     categories[s.category].push(s);
   });
@@ -410,6 +428,12 @@ function renderSymptoms() {
 
 // ── 選擇症狀 ──────────────────────────────────────────────────
 function selectSymptom(id) {
+  // 無特殊症狀：直接送出，不進追問流程
+  if (id === 'no_symptom') {
+    currentSymptom = SYMPTOMS.find(s => s.id === 'no_symptom');
+    submitResult(null, null, 3);
+    return;
+  }
   const sym = SYMPTOMS.find(s => s.id === id);
   if (!sym) return;
   currentSymptom = sym;
@@ -484,16 +508,25 @@ async function showResult(level, followupKey, followupAnswer) {
   const patient = await fetch(`${GAS_URL}?action=getPatient&userId=${userId}`).then(r=>r.json());
   const pData = patient.data || {};
 
-  fetch(`${GAS_URL}?action=logSymptom&userId=${userId}` +
-    `&displayName=${encodeURIComponent(userProfile?.displayName||'')}` +
-    `&realName=${encodeURIComponent(pData.real_name||'')}` +
-    `&mrn=${encodeURIComponent(pData.mrn||'')}` +
-    `&symptomCat=${encodeURIComponent(currentSymptom.category)}` +
-    `&symptomId=${currentSymptom.id}` +
-    `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
-    `&followupKey=${encodeURIComponent(followupKey||'')}` +
-    `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
-    `&level=${level}`);
+  // 記錄症狀並取回連續天數
+  try {
+    const logResp = await fetch(`${GAS_URL}?action=logSymptom&userId=${userId}` +
+      `&displayName=${encodeURIComponent(userProfile?.displayName||'')}` +
+      `&realName=${encodeURIComponent(pData.real_name||'')}` +
+      `&mrn=${encodeURIComponent(pData.mrn||'')}` +
+      `&symptomCat=${encodeURIComponent(currentSymptom.category)}` +
+      `&symptomId=${currentSymptom.id}` +
+      `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
+      `&followupKey=${encodeURIComponent(followupKey||'')}` +
+      `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
+      `&level=${level}`);
+    const logData = await logResp.json();
+
+    // 顯示連續回報天數
+    if (logData.streak !== undefined) {
+      showStreakBadge(logData.streak, logData.is_new_day);
+    }
+  } catch(e) { console.error('logSymptom error:', e); }
 
   if (level <= 2) {
     fetch(`${GAS_URL}?action=notifyCM&userId=${userId}` +
@@ -503,6 +536,33 @@ async function showResult(level, followupKey, followupAnswer) {
       `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
       `&level=${level}`);
   }
+}
+
+// ── 顯示連續回報天數 ─────────────────────────────────────────
+function showStreakBadge(streak, isNewDay) {
+  if (!isNewDay) return; // 同一天回報多次，不重複顯示
+
+  // 找到結果頁的容器（level 3 / no_symptom 頁面）
+  const container = document.getElementById('result-streak');
+  if (!container) return;
+
+  // 里程碑訊息
+  const milestones = {
+    3:  '連續回報 3 天！很棒，繼續保持 👍',
+    7:  '連續回報 1 週！你真的很認真照顧自己 ⭐',
+    14: '連續回報 2 週！個管師說謝謝你這麼配合 🙏',
+    30: '連續回報 1 個月！你是最認真的病人 🏆',
+    60: '連續回報 2 個月！你是我們的健康之星 🌟',
+  };
+
+  let html = `<div class="streak-badge">🔥 已連續回報 ${streak} 天</div>`;
+
+  if (milestones[streak]) {
+    html += `<div class="streak-milestone">🎉 ${milestones[streak]}</div>`;
+  }
+
+  container.innerHTML = html;
+  container.style.display = 'block';
 }
 
 function showScreen(name) {

@@ -1,141 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>衛教資訊</title>
-
-<style>
-:root {
-  --navy: #1A3A5C;
-  --gray: #F4F6F9;
-  --bdr:  #E2E8F0;
-  --txt:  #1E293B;
-  --mut:  #64748B;
-  --r:    12px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-  margin: 0;
-  background: #fff;
-  color: var(--txt);
-}
-
-a {
-  color: #2563EB;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-a:hover {
-  text-decoration: underline;
-  color: #1d4ed8;
-}
-
-.header {
-  background: var(--navy);
-  padding: 20px;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.h-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.header > div:last-child {
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-.content {
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.section {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--bdr);
-}
-
-.section:last-child {
-  border-bottom: none;
-}
-
-.sec-title {
-  font-weight: bold;
-  margin-bottom: 12px;
-  color: var(--navy);
-  font-size: 16px;
-}
-
-.section ul {
-  margin: 12px 0;
-  padding-left: 20px;
-}
-
-.section li {
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-
-.loading {
-  text-align: center;
-  padding: 80px 20px;
-  font-size: 16px;
-  color: var(--mut);
-}
-
-.screen {
-  display: none;
-}
-
-.screen.active {
-  display: block;
-}
-
-/* Accessibility improvements */
-@media (prefers-reduced-motion: reduce) {
-  a {
-    transition: none;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #1e1e1e;
-    color: #e0e0e0;
-  }
-  
-  .header {
-    background: #0f2438;
-  }
-  
-  a {
-    color: #64b5f6;
-  }
-}
-</style>
 </head>
 
 <body>
 
-<!-- Loading screen -->
-<div id="scr-loading" class="screen active">
-  <div class="loading">載入中…</div>
-</div>
 
 <!-- Main content -->
 <div id="scr-consent" class="screen">
@@ -187,14 +57,6 @@ a:hover {
 
   </div>
 </div>
-
-<script>
-  // Hide loading screen when page is ready
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('scr-loading').classList.remove('active');
-    document.getElementById('scr-consent').classList.add('active');
-  });
-</script>
 
 </body>
 </html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>研究知情同意書</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root {
+  --navy: #1A3A5C;
+  --gray: #F4F6F9;
+  --bdr:  #E2E8F0;
+  --txt:  #1E293B;
+  --mut:  #64748B;
+  --red:  #C0392B;
+  --r:    12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: #fff; color: var(--txt); font-size: 15px;
+}
+.header {
+  background: var(--navy); padding: 20px 20px 32px;
+  position: relative; overflow: hidden;
+}
+.header::after {
+  content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+  height: 40px; background: #fff;
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+}
+.h-label { color: #7EB8E8; font-size: 11px; letter-spacing: 2px; }
+.h-title { color: #fff; font-size: 20px; font-weight: 800; margin-top: 4px; }
+.h-sub   { color: #AACCEE; font-size: 12px; margin-top: 6px; }
+.meta-bar {
+  background: var(--gray); border-bottom: 1px solid var(--bdr);
+  padding: 10px 20px; font-size: 11px; color: var(--mut);
+}
+.meta-bar strong { color: var(--navy); }
+.content { padding: 20px 20px 0; max-width: 680px; margin: 0 auto; }
+.section { margin-bottom: 24px; }
+.sec-title {
+  font-size: 14px; font-weight: 800; color: var(--navy);
+  border-left: 4px solid var(--navy); padding-left: 10px; margin-bottom: 12px;
+}
+.section p  { font-size: 14px; line-height: 1.9; margin-bottom: 10px; }
+.section ul { padding-left: 20px; margin-bottom: 10px; }
+.section li { font-size: 14px; line-height: 1.9; margin-bottom: 4px; }
+.risk-box {
+  background: #FFFBEB; border: 1px solid #FDE68A;
+  border-radius: var(--r); padding: 14px 16px; margin: 12px 0;
+}
+.risk-box .rt { font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 8px; }
+.risk-box p   { font-size: 13px; line-height: 1.8; color: #78350F; }
+.contact-box  { background: var(--gray); border-radius: var(--r); padding: 14px 16px; margin: 8px 0; }
+.c-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; line-height: 1.6; }
+.c-row:last-child { margin-bottom: 0; }
+.c-lbl { color: var(--mut); font-weight: 600; flex-shrink: 0; width: 72px; }
+hr { border: none; border-top: 2px solid var(--bdr); margin: 24px 0; }
+.checklist { background: var(--gray); border-radius: var(--r); padding: 16px; margin: 16px 0; }
+.chk-item  { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer; }
+.chk-item:last-child { margin-bottom: 0; }
+.chk-box {
+  width: 22px; height: 22px; border: 2px solid var(--bdr);
+  border-radius: 6px; flex-shrink: 0; background: #fff;
+  display: flex; align-items: center; justify-content: center; transition: .15s;
+}
+.chk-box.on { background: var(--navy); border-color: var(--navy); }
+.chk-box.on::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
+.chk-lbl { font-size: 14px; line-height: 1.6; font-weight: 500; }
+.btn-area {
+  position: sticky; bottom: 0; background: #fff;
+  padding: 12px 20px; border-top: 1px solid var(--bdr);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+}
+.btn-hint { text-align: center; font-size: 12px; color: var(--mut); margin-bottom: 10px; line-height: 1.5; }
+.btn-agree {
+  display: block; width: 100%; padding: 16px;
+  border-radius: var(--r); border: none;
+  background: var(--navy); color: #fff;
+  font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: opacity .2s;
+}
+.btn-agree:disabled { background: #CBD5E1; cursor: not-allowed; }
+.btn-agree:not(:disabled):active { opacity: .85; }
+.btn-decline {
+  display: block; width: 100%; padding: 13px;
+  border-radius: var(--r); border: 2px solid var(--bdr);
+  background: #fff; color: var(--mut); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.loading { text-align: center; padding: 80px 20px; color: var(--mut); }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--bdr);
+  border-top-color: var(--navy); border-radius: 50%;
+  animation: spin .8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入中…</div></div>
+</div>
+
+<div id="scr-consent" class="screen">
+  <div class="header">
+    <div class="h-label">Patient Educations</div>
+    <div class="h-title">📋 衛教資訊</div>
+    <div class="h-sub">請仔細閱讀</div>
+  </div>
+  <div class="meta-bar">
+    計畫：<strong>對話式 LINE 機器人應用於血液腫瘤病人照護之成效</strong>　
+    版本：<strong>v1.0</strong>　IRB 核准日期：<strong>________ 年 __ 月 __ 日</strong>
+  </div>
+
+  <div class="content">
+
+    <div class="section" style="margin-top:20px">
+      <div class="sec-title"><a href="https://lymphoma.ecancer.org.tw/">淋巴癌攻略</a></div>
+    </div>
+
+    <div class="section" style="margin-top:20px">
+      <div class="sec-title"><a href='https://leukemia.ecancer.org.tw/'>血癌攻略</a></div>
+    </div>
+
+    <div class="section" style="margin-top:20px">
+      <div class="sec-title"><a href='https://knowledge.ecancer.org.tw/knowledge/about_cancer/multiple_myeloma'>多發性骨髓瘤</a></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">骨髓移植</div>
+      <ul>
+        <li><strong>Part 1-認識造血幹細胞移植</strong> https://youtu.be/phx9OS1AYGg </li>
+        <li><strong>Part 2-造血幹細胞移植期間的注意事項</strong> https://youtu.be/WympuNJhEAg </li>
+        <li><strong>Part 3-造血幹細胞移植後注意事項</strong> https://youtu.be/I_JGwHVnK6E </li>
+      </ul>
+    </div>
+
+</div>
+
+<script>
+
+</script>
+
+
+</body>
+</html>

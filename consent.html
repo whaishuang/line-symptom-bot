@@ -641,42 +641,67 @@ async function doAgree() {
   btn.disabled    = true;
   btn.textContent = '記錄中…';
 
-  // 收集裝置資訊（法律效力補強）
-  const deviceInfo = {
-    userAgent:  navigator.userAgent,
-    platform:   navigator.platform || '',
-    language:   navigator.language || '',
-    screenW:    screen.width,
-    screenH:    screen.height,
-    timestamp:  new Date().toISOString(),
-  };
+  // 裝置資訊
+  const deviceInfo = encodeURIComponent(JSON.stringify({
+    ua: navigator.userAgent.slice(0, 200),
+    sw: screen.width, sh: screen.height,
+    ts: new Date().toISOString(),
+  }));
 
   try {
-    const r = await fetch(`${GAS_URL}?action=saveConsent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        version:    CONSENT_VERSION,
-        status:     'consented',
-        signature:  sigDataUrl,            // PNG base64
-        deviceInfo: JSON.stringify(deviceInfo),
-      }),
-    });
-    const d = await r.json();
-    if (d.ok) {
-      liff.closeWindow();
-    } else {
-      alert('記錄失敗，請稍後再試：' + (d.error||''));
-      btn.disabled    = false;
-      btn.textContent = '✅ 我同意，並開始使用';
-      submitting      = false;
+    // Step 1：儲存同意狀態（GET）
+    const r1 = await fetch(
+      `${GAS_URL}?action=saveConsent` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
+      `&status=consented` +
+      `&deviceInfo=${deviceInfo}`
+    );
+    const d1 = await r1.json();
+    if (!d1.ok) throw new Error(d1.error || '同意書儲存失敗');
+
+    // Step 2：上傳簽名圖片（壓縮後 GET）
+    try {
+      // 把簽名壓縮到較小尺寸
+      const compressed = compressSig(sigDataUrl, 600, 200);
+      const sigParam   = encodeURIComponent(compressed);
+      // 簽名可能很長，用 fetch POST 但只傳簽名，不影響 LINE Webhook
+      await fetch(
+        `${GAS_URL}?action=saveSignature` +
+        `&userId=${encodeURIComponent(userId)}` +
+        `&sig=${sigParam}`
+      );
+    } catch(sigErr) {
+      console.warn('簽名上傳失敗（不影響同意記錄）:', sigErr);
     }
+
+    // 關閉 LIFF
+    liff.closeWindow();
+
   } catch(e) {
-    alert('連線失敗，請稍後再試');
+    alert('記錄失敗，請稍後再試：' + e.message);
     btn.disabled    = false;
     btn.textContent = '✅ 我同意，並開始使用';
     submitting      = false;
+  }
+}
+
+// 壓縮簽名圖片
+function compressSig(dataUrl, maxW, maxH) {
+  try {
+    const img    = new Image();
+    img.src      = dataUrl;
+    const canvas = document.createElement('canvas');
+    const ratio  = Math.min(maxW / (img.width || maxW), maxH / (img.height || maxH), 1);
+    canvas.width  = Math.round((img.width  || maxW)  * ratio);
+    canvas.height = Math.round((img.height || maxH) * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.7); // JPEG 壓縮
+  } catch(e) {
+    return dataUrl; // 壓縮失敗就用原圖
   }
 }
 

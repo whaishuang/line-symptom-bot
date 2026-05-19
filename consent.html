@@ -199,6 +199,68 @@ body{
 .screen.active{ display:block; }
 #scr-done-agree{ display:none; flex-direction:column; }
 #scr-done-decline{ display:none; flex-direction:column; }
+
+/* ── 簽名區 ── */
+.sig-section{
+  background:var(--gray); border-radius:var(--radius);
+  padding:16px; margin-top:16px;
+}
+.sig-label{
+  font-size:14px; font-weight:700; color:var(--navy); margin-bottom:10px;
+}
+.sig-preview-wrap{
+  border:2px dashed var(--bdr); border-radius:10px;
+  background:#fff; min-height:72px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:.15s; overflow:hidden;
+}
+.sig-preview-wrap:active{ background:var(--gray); }
+.sig-preview-wrap img{
+  max-width:100%; max-height:80px; display:block;
+}
+.sig-placeholder{
+  font-size:13px; color:var(--mut); text-align:center; padding:20px;
+}
+.sig-placeholder span{ font-size:24px; display:block; margin-bottom:6px; }
+.sig-hint{ font-size:11px; color:var(--mut); margin-top:8px; text-align:center; }
+.btn-clear-sig{
+  font-size:12px; color:var(--red); background:none; border:none;
+  cursor:pointer; margin-top:8px; display:none; text-decoration:underline;
+}
+
+/* ── 全螢幕簽名 overlay ── */
+#sig-overlay{
+  display:none; position:fixed; inset:0; z-index:500;
+  background:#fff; flex-direction:column;
+}
+#sig-overlay.open{ display:flex; }
+.sig-overlay-header{
+  background:var(--navy); color:#fff;
+  padding:14px 16px; display:flex; align-items:center;
+  justify-content:space-between; flex-shrink:0;
+}
+.sig-overlay-title{ font-size:16px; font-weight:700; }
+.sig-overlay-hint{ font-size:11px; color:#AACCEE; margin-top:3px; }
+#sig-canvas{
+  flex:1; touch-action:none; cursor:crosshair;
+  display:block; width:100%;
+}
+.sig-overlay-footer{
+  padding:12px 16px; display:flex; gap:10px;
+  border-top:1px solid var(--bdr); flex-shrink:0;
+  background:#fff;
+}
+.btn-sig-clear{
+  flex:0 0 auto; padding:12px 20px; border-radius:10px;
+  border:2px solid var(--bdr); background:#fff;
+  color:var(--mut); font-size:14px; font-weight:600; cursor:pointer;
+}
+.btn-sig-confirm{
+  flex:1; padding:13px; border-radius:10px; border:none;
+  background:var(--navy); color:#fff;
+  font-size:15px; font-weight:700; cursor:pointer;
+}
+.btn-sig-confirm:disabled{ background:#CBD5E1; }
 </style>
 </head>
 <body>
@@ -332,6 +394,22 @@ body{
       </div>
     </div>
 
+    <!-- 簽名區 -->
+    <div class="section">
+      <div class="section-title">簽名確認</div>
+      <div class="sig-section">
+        <div class="sig-label">✍️ 請於下方框內以手指簽署您的姓名</div>
+        <div class="sig-preview-wrap" id="sig-preview-wrap" onclick="openSigOverlay()">
+          <div class="sig-placeholder" id="sig-placeholder">
+            <span>✍️</span>點此開啟簽名視窗
+          </div>
+          <img id="sig-img" style="display:none">
+        </div>
+        <button class="btn-clear-sig" id="btn-clear-sig" onclick="clearSig()">✕ 清除簽名，重新簽署</button>
+        <div class="sig-hint">簽名後才可按「我同意」送出</div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 
   <div class="scroll-hint" id="scroll-hint">
@@ -349,6 +427,22 @@ body{
   </div>
 
 </div><!-- /scr-consent -->
+
+<!-- 全螢幕簽名 overlay -->
+<div id="sig-overlay">
+  <div class="sig-overlay-header">
+    <div>
+      <div class="sig-overlay-title">✍️ 請簽署您的姓名</div>
+      <div class="sig-overlay-hint">橫向模式，請用手指在白色區域簽名</div>
+    </div>
+    <button onclick="closeSigOverlay()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer">取消</button>
+  </div>
+  <canvas id="sig-canvas"></canvas>
+  <div class="sig-overlay-footer">
+    <button class="btn-sig-clear" onclick="clearCanvas()">清除</button>
+    <button class="btn-sig-confirm" id="btn-sig-confirm" onclick="confirmSig()" disabled>確認簽名 ✓</button>
+  </div>
+</div>
 
 <!-- 完成頁（closeWindow 失敗時的 fallback）-->
 <div id="scr-done-agree" class="screen">
@@ -375,9 +469,12 @@ const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz
 const LIFF_ID  = '2010034796-myAIBrsg'; // ← 填入
 const CONSENT_VERSION = 'v1.0';
 
-let userId   = '';
-let checked  = { chk1:false, chk2:false, chk3:false };
+let userId     = '';
+let checked    = { chk1:false, chk2:false, chk3:false };
 let submitting = false;
+let sigDataUrl = '';       // 簽名圖片 base64
+let isDrawing  = false;
+let lastX = 0, lastY = 0;
 
 async function init() {
   try {
@@ -406,44 +503,180 @@ function toggleCheck(id) {
   checked[id] = !checked[id];
   const el = document.getElementById(id);
   el.classList.toggle('checked', checked[id]);
-  const allChecked = checked.chk1 && checked.chk2 && checked.chk3;
-  const btn = document.getElementById('btn-agree');
-  btn.disabled = !allChecked;
-  document.getElementById('btn-hint').textContent = allChecked
-    ? '點選下方按鈕，即完成電子同意程序'
-    : '請勾選上方三個選項後，按鈕才會啟用';
+  updateAgreeBtn();
   document.getElementById('scroll-hint').style.display = 'none';
+}
+
+function updateAgreeBtn() {
+  const allChecked = checked.chk1 && checked.chk2 && checked.chk3;
+  const hasSig     = !!sigDataUrl;
+  const btn        = document.getElementById('btn-agree');
+  btn.disabled     = !(allChecked && hasSig);
+  const hints = [];
+  if (!allChecked) hints.push('勾選上方三個選項');
+  if (!hasSig)     hints.push('完成簽名');
+  document.getElementById('btn-hint').textContent =
+    (allChecked && hasSig)
+      ? '點選下方按鈕，即完成電子同意程序'
+      : '請' + hints.join('及') + '後，按鈕才會啟用';
+}
+
+// ── 簽名 overlay ─────────────────────────────────────────────
+function openSigOverlay() {
+  const overlay = document.getElementById('sig-overlay');
+  overlay.classList.add('open');
+  // 鎖定背景捲動
+  document.body.style.overflow = 'hidden';
+  initCanvas();
+}
+
+function closeSigOverlay() {
+  document.getElementById('sig-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function initCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  // 配合實際顯示尺寸
+  const rect   = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  || window.innerWidth;
+  canvas.height = rect.height || (window.innerHeight - 120);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#1A3A5C';
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+
+  // Touch 事件
+  canvas.addEventListener('touchstart',  onTouchStart,  { passive:false });
+  canvas.addEventListener('touchmove',   onTouchMove,   { passive:false });
+  canvas.addEventListener('touchend',    onTouchEnd,    { passive:false });
+  // Mouse 事件（桌機測試用）
+  canvas.addEventListener('mousedown',   onMouseDown);
+  canvas.addEventListener('mousemove',   onMouseMove);
+  canvas.addEventListener('mouseup',     onMouseUp);
+
+  isDrawing = false;
+  document.getElementById('btn-sig-confirm').disabled = true;
+}
+
+function getPos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const src  = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+function onTouchStart(e) {
+  e.preventDefault();
+  const p = getPos(e, this);
+  isDrawing = true; lastX = p.x; lastY = p.y;
+  const ctx = this.getContext('2d');
+  ctx.beginPath(); ctx.moveTo(lastX, lastY);
+}
+function onTouchMove(e) {
+  e.preventDefault();
+  if (!isDrawing) return;
+  const p = getPos(e, this);
+  const ctx = this.getContext('2d');
+  ctx.lineTo(p.x, p.y); ctx.stroke();
+  lastX = p.x; lastY = p.y;
+  document.getElementById('btn-sig-confirm').disabled = false;
+}
+function onTouchEnd(e) { e.preventDefault(); isDrawing = false; }
+function onMouseDown(e) {
+  isDrawing = true;
+  const p = getPos(e, this);
+  lastX = p.x; lastY = p.y;
+  const ctx = this.getContext('2d');
+  ctx.beginPath(); ctx.moveTo(lastX, lastY);
+}
+function onMouseMove(e) {
+  if (!isDrawing) return;
+  const p = getPos(e, this);
+  const ctx = this.getContext('2d');
+  ctx.lineTo(p.x, p.y); ctx.stroke();
+  lastX = p.x; lastY = p.y;
+  document.getElementById('btn-sig-confirm').disabled = false;
+}
+function onMouseUp() { isDrawing = false; }
+
+function clearCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('btn-sig-confirm').disabled = true;
+}
+
+function confirmSig() {
+  const canvas = document.getElementById('sig-canvas');
+  sigDataUrl   = canvas.toDataURL('image/png');
+
+  // 顯示縮圖
+  const img = document.getElementById('sig-img');
+  img.src   = sigDataUrl;
+  img.style.display = 'block';
+  document.getElementById('sig-placeholder').style.display = 'none';
+  document.getElementById('btn-clear-sig').style.display = 'block';
+
+  closeSigOverlay();
+  updateAgreeBtn();
+}
+
+function clearSig() {
+  sigDataUrl = '';
+  document.getElementById('sig-img').style.display    = 'none';
+  document.getElementById('sig-placeholder').style.display = 'block';
+  document.getElementById('btn-clear-sig').style.display   = 'none';
+  updateAgreeBtn();
 }
 
 async function doAgree() {
   if (submitting) return;
+  if (!sigDataUrl) { alert('請先完成簽名'); return; }
   submitting = true;
   const btn = document.getElementById('btn-agree');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = '記錄中…';
 
+  // 收集裝置資訊（法律效力補強）
+  const deviceInfo = {
+    userAgent:  navigator.userAgent,
+    platform:   navigator.platform || '',
+    language:   navigator.language || '',
+    screenW:    screen.width,
+    screenH:    screen.height,
+    timestamp:  new Date().toISOString(),
+  };
+
   try {
-    const r = await fetch(
-      `${GAS_URL}?action=saveConsent` +
-      `&userId=${encodeURIComponent(userId)}` +
-      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
-      `&status=consented`
-    );
+    const r = await fetch(`${GAS_URL}?action=saveConsent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        version:    CONSENT_VERSION,
+        status:     'consented',
+        signature:  sigDataUrl,            // PNG base64
+        deviceInfo: JSON.stringify(deviceInfo),
+      }),
+    });
     const d = await r.json();
     if (d.ok) {
-      // 直接關閉 LIFF，GAS 會推播確認訊息給病人
       liff.closeWindow();
     } else {
       alert('記錄失敗，請稍後再試：' + (d.error||''));
       btn.disabled    = false;
       btn.textContent = '✅ 我同意，並開始使用';
-      submitting = false;
+      submitting      = false;
     }
   } catch(e) {
     alert('連線失敗，請稍後再試');
     btn.disabled    = false;
     btn.textContent = '✅ 我同意，並開始使用';
-    submitting = false;
+    submitting      = false;
   }
 }
 

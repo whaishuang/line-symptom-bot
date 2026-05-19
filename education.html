@@ -1,62 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>衛教資訊</title>
-</head>
+<style>
+:root {
+  --navy: #1A3A5C;
+  --gray: #F4F6F9;
+  --bdr:  #E2E8F0;
+  --txt:  #1E293B;
+  --mut:  #64748B;
+  --r:    14px;
+  --shadow: 0 2px 16px rgba(26,58,92,.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: var(--gray); color: var(--txt); min-height: 100vh;
+}
 
+/* Header */
+.header {
+  background: var(--navy); padding: 20px 20px 32px;
+  position: relative; overflow: hidden;
+}
+.header::after {
+  content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+  height: 40px; background: var(--gray);
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+}
+.h-label { color: #7EB8E8; font-size: 11px; letter-spacing: 2px; }
+.h-title { color: #fff; font-size: 22px; font-weight: 800; margin-top: 4px; }
+.h-sub   { color: #AACCEE; font-size: 13px; margin-top: 4px; }
+
+/* Main */
+.main { padding: 16px 16px 40px; }
+
+/* 分類卡片 */
+.card {
+  background: #fff; border-radius: var(--r);
+  box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px;
+}
+.card-title {
+  background: var(--navy); color: #fff;
+  padding: 12px 16px; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-body { padding: 0; }
+
+/* 連結列 */
+.link-row {
+  display: flex; align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid var(--bdr);
+  text-decoration: none; color: var(--txt);
+  transition: background .15s; gap: 12px;
+}
+.link-row:last-child { border-bottom: none; }
+.link-row:active { background: var(--gray); }
+.link-icon { font-size: 22px; flex-shrink: 0; width: 32px; text-align: center; }
+.link-text { flex: 1; }
+.link-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.link-desc  { font-size: 12px; color: var(--mut); margin-top: 2px; line-height: 1.4; }
+.link-arrow { color: #CBD5E1; font-size: 16px; flex-shrink: 0; }
+</style>
+</head>
 <body>
 
-
-<!-- Main content -->
-<div id="scr-consent" class="screen">
-  
-  <div class="header">
-    <div class="h-title">📋 衛教資訊</div>
-    <div>歡迎閱讀</div>
-  </div>
-
-  <div class="content">
-
-    <div class="section">
-      <div class="sec-title">
-        <a href="https://lymphoma.ecancer.org.tw/" target="_blank" rel="noopener noreferrer">淋巴癌攻略</a>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="sec-title">
-        <a href="https://leukemia.ecancer.org.tw/" target="_blank" rel="noopener noreferrer">血癌攻略</a>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="sec-title">
-        <a href="https://knowledge.ecancer.org.tw/knowledge/about_cancer/multiple_myeloma" target="_blank" rel="noopener noreferrer">
-          多發性骨髓瘤
-        </a>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="sec-title">骨髓移植</div>
-      <ul>
-        <li>
-          <strong>Part 1-認識造血幹細胞移植</strong><br>
-          <a href="https://youtu.be/phx9OS1AYGg" target="_blank" rel="noopener noreferrer">觀看影片</a>
-        </li>
-        <li>
-          <strong>Part 2-移植期間注意事項</strong><br>
-          <a href="https://youtu.be/WympuNJhEAg" target="_blank" rel="noopener noreferrer">觀看影片</a>
-        </li>
-        <li>
-          <strong>Part 3-移植後注意事項</strong><br>
-          <a href="https://youtu.be/I_JGwHVnK6E" target="_blank" rel="noopener noreferrer">觀看影片</a>
-        </li>
-      </ul>
-    </div>
-
-  </div>
+<div class="header">
+  <div class="h-label">Health Education</div>
+  <div class="h-title">📚 衛教資訊</div>
+  <div class="h-sub">點選連結查看詳細說明</div>
 </div>
 
+<div class="main">
+
+  <!-- 疾病介紹 -->
+  <div class="card">
+    <div class="card-title">🏥 疾病介紹</div>
+    <div class="card-body">
+      <a class="link-row" href="https://lymphoma.ecancer.org.tw/" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">🩸</div>
+        <div class="link-text">
+          <div class="link-title">淋巴癌攻略</div>
+          <div class="link-desc">認識淋巴瘤、治療方式與照護須知</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+      <a class="link-row" href="https://leukemia.ecancer.org.tw/" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">💉</div>
+        <div class="link-text">
+          <div class="link-title">血癌攻略</div>
+          <div class="link-desc">認識血液腫瘤、治療方式與照護須知</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+      <a class="link-row" href="https://knowledge.ecancer.org.tw/knowledge/about_cancer/multiple_myeloma" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">🦴</div>
+        <div class="link-text">
+          <div class="link-title">多發性骨髓瘤</div>
+          <div class="link-desc">了解多發性骨髓瘤的診斷與治療</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 骨髓移植衛教影片 -->
+  <div class="card">
+    <div class="card-title">🎬 骨髓移植衛教影片</div>
+    <div class="card-body">
+      <a class="link-row" href="https://youtu.be/phx9OS1AYGg" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">▶️</div>
+        <div class="link-text">
+          <div class="link-title">Part 1：認識造血幹細胞移植</div>
+          <div class="link-desc">什麼是造血幹細胞移植？適應症與流程說明</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+      <a class="link-row" href="https://youtu.be/WympuNJhEAg" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">▶️</div>
+        <div class="link-text">
+          <div class="link-title">Part 2：移植期間注意事項</div>
+          <div class="link-desc">住院移植期間的照護重點與注意事項</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+      <a class="link-row" href="https://youtu.be/I_JGwHVnK6E" target="_blank" rel="noopener noreferrer">
+        <div class="link-icon">▶️</div>
+        <div class="link-text">
+          <div class="link-title">Part 3：移植後注意事項</div>
+          <div class="link-desc">出院後的居家照護、感染預防與回診須知</div>
+        </div>
+        <div class="link-arrow">›</div>
+      </a>
+    </div>
+  </div>
+
+</div>
 </body>
 </html>

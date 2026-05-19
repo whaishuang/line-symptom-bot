@@ -120,20 +120,9 @@ a:hover {
   </div>
 </div>
 
-<script>
-async function initLIFF() {
-  try {
-    await liff.init({ liffId: "你的LIFF_ID" }); // ←記得改
-    document.getElementById("scr-loading").classList.remove("active");
-    document.getElementById("scr-consent").classList.add("active");
-  } catch (err) {
-    alert("LIFF 初始化失敗");
-    console.error(err);
-  }
-}
+</body>
+</html>
 
-initLIFF();
-</script>
 
 </body>
 </html>

@@ -231,6 +231,40 @@ body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
 const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';  // ← 填入
 const LIFF_ID  = '2010034796-J1whLo0G'; // ← 填入
 
+// ── 同意書檢查（每個 LIFF 共用）────────────────────────────
+const LIFF_CONSENT_URL = 'https://liff.line.me/YOUR_LIFF_ID_CONSENT'; // ← 填入
+
+async function checkConsent(userId)
+{
+  try {
+    const r = await fetch(`${GAS_URL}?action=getConsent&userId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (d.ok && d.status === 'consented') return true;
+  }
+  catch(e) { console.warn('checkConsent error:', e); }
+
+  // 未同意：顯示提示頁，蓋住整個畫面
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;padding:32px 24px;
+      font-family:-apple-system,'PingFang TC',sans-serif;background:#F4F6F9;">
+      <div style="font-size:56px;margin-bottom:20px">📋</div>
+      <div style="font-size:18px;font-weight:800;color:#1A3A5C;margin-bottom:12px">
+        請先完成研究同意書
+      </div>
+      <div style="font-size:14px;color:#64748B;text-align:center;
+        line-height:1.8;margin-bottom:28px;max-width:280px">
+        使用本系統前，需先閱讀並完成研究知情同意書。
+      </div>
+      <button onclick="liff.openWindow({url:'${LIFF_CONSENT_URL}',external:false})"
+        style="padding:14px 32px;background:#1A3A5C;color:#fff;border:none;
+          border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+        📋 前往填寫同意書
+      </button>
+    </div>`;
+  return false;
+}
+
 // 警示閾值
 const THRESHOLDS = {
   sbp:  { l1_hi:180, l1_lo:80,  l2_hi:160, l2_lo:90  },
@@ -247,6 +281,9 @@ async function init() {
     if (!liff.isLoggedIn()) { liff.login(); return; }
     const profile = await liff.getProfile();
     userId = profile.userId;
+
+// ↓ 加這兩行，檢查不過就直接 return
+  if (!await checkConsent(userId)) return;
 
     // 設定預設時間為現在（台北時區）
     const now = new Date();

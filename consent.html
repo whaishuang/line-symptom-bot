@@ -290,8 +290,8 @@ body{
     <!-- 一、研究目的 -->
     <div class="section" style="margin-top:20px">
       <div class="section-title">一、研究目的</div>
-      <p>本研究旨在評估利用 LINE 對話式機器人（LINE-based Symptom Monitoring System, LSMS），能否有效協助血液腫瘤病人進行居家症狀監測、生命徵象追蹤、即時衛教諮詢與生活品質評估，以提升整體臨床照護成效，並減輕醫療團隊的照護負擔。</p>
-      <p>主持機構：<strong>國立臺灣大學醫學院附設醫院 血液腫瘤科</strong></p>
+      <p>本研究旨在評估利用 LINE 對話式機器人（LINE-based Symptom Monitoring System, LSMS），能否有效協助血液腫瘤病人進行居家症狀監測、生命徵象追蹤、即時衛教諮詢與生活品質評估，以提升整體臨床照護成效，並減輕醫療團隊的照護負擔。本研究分別從病人端（生活品質與治療滿意度）、個案管理師端（工作負擔）及整體照護品質（急診就診率、住院率等）三個面向進行綜合評估。</p>
+      <p>主持機構：<strong>國立臺灣大學醫學院附設醫院 內科部血液腫瘤科</strong></p>
     </div>
 
     <!-- 二、參與內容 -->
@@ -350,7 +350,7 @@ body{
       <div class="contact-box">
         <div class="contact-row">
           <span class="contact-label">研究主持人</span>
-          <span class="contact-val">○○○ 醫師｜國立臺灣大學醫學院附設醫院 血液腫瘤科</span>
+          <span class="contact-val">黃懷萱 醫師｜國立臺灣大學醫學院附設醫院 內科部血液腫瘤科</span>
         </div>
         <div class="contact-row">
           <span class="contact-label">聯絡電話</span>
@@ -358,7 +358,7 @@ body{
         </div>
         <div class="contact-row">
           <span class="contact-label">電子郵件</span>
-          <span class="contact-val">○○○@ntu.edu.tw</span>
+          <span class="contact-val">○○○@ntuh.gov.tw</span>
         </div>
       </div>
       <div class="contact-box" style="margin-top:8px">
@@ -394,22 +394,6 @@ body{
       </div>
     </div>
 
-    <!-- 簽名區 -->
-    <div class="section">
-      <div class="section-title">簽名確認</div>
-      <div class="sig-section">
-        <div class="sig-label">✍️ 請於下方框內以手指簽署您的姓名</div>
-        <div class="sig-preview-wrap" id="sig-preview-wrap" onclick="openSigOverlay()">
-          <div class="sig-placeholder" id="sig-placeholder">
-            <span>✍️</span>點此開啟簽名視窗
-          </div>
-          <img id="sig-img" style="display:none">
-        </div>
-        <button class="btn-clear-sig" id="btn-clear-sig" onclick="clearSig()">✕ 清除簽名，重新簽署</button>
-        <div class="sig-hint">簽名後才可按「我同意」送出</div>
-      </div>
-    </div>
-
   </div><!-- /content -->
 
   <div class="scroll-hint" id="scroll-hint">
@@ -427,22 +411,6 @@ body{
   </div>
 
 </div><!-- /scr-consent -->
-
-<!-- 全螢幕簽名 overlay -->
-<div id="sig-overlay">
-  <div class="sig-overlay-header">
-    <div>
-      <div class="sig-overlay-title">✍️ 請簽署您的姓名</div>
-      <div class="sig-overlay-hint">橫向模式，請用手指在白色區域簽名</div>
-    </div>
-    <button onclick="closeSigOverlay()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer">取消</button>
-  </div>
-  <canvas id="sig-canvas"></canvas>
-  <div class="sig-overlay-footer">
-    <button class="btn-sig-clear" onclick="clearCanvas()">清除</button>
-    <button class="btn-sig-confirm" id="btn-sig-confirm" onclick="confirmSig()" disabled>確認簽名 ✓</button>
-  </div>
-</div>
 
 <!-- 完成頁（closeWindow 失敗時的 fallback）-->
 <div id="scr-done-agree" class="screen">
@@ -509,201 +477,16 @@ function toggleCheck(id) {
 
 function updateAgreeBtn() {
   const allChecked = checked.chk1 && checked.chk2 && checked.chk3;
-  const hasSig     = !!sigDataUrl;
   const btn        = document.getElementById('btn-agree');
   btn.disabled     = !(allChecked && hasSig);
   const hints = [];
   if (!allChecked) hints.push('勾選上方三個選項');
-  if (!hasSig)     hints.push('完成簽名');
   document.getElementById('btn-hint').textContent =
     (allChecked && hasSig)
       ? '點選下方按鈕，即完成電子同意程序'
       : '請' + hints.join('及') + '後，按鈕才會啟用';
 }
 
-// ── 簽名 overlay ─────────────────────────────────────────────
-function openSigOverlay() {
-  const overlay = document.getElementById('sig-overlay');
-  overlay.classList.add('open');
-  // 鎖定背景捲動
-  document.body.style.overflow = 'hidden';
-  initCanvas();
-}
-
-function closeSigOverlay() {
-  document.getElementById('sig-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function initCanvas() {
-  const canvas = document.getElementById('sig-canvas');
-  // 配合實際顯示尺寸
-  const rect   = canvas.getBoundingClientRect();
-  canvas.width  = rect.width  || window.innerWidth;
-  canvas.height = rect.height || (window.innerHeight - 120);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = '#1A3A5C';
-  ctx.lineWidth   = 2.5;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  // Touch 事件
-  canvas.addEventListener('touchstart',  onTouchStart,  { passive:false });
-  canvas.addEventListener('touchmove',   onTouchMove,   { passive:false });
-  canvas.addEventListener('touchend',    onTouchEnd,    { passive:false });
-  // Mouse 事件（桌機測試用）
-  canvas.addEventListener('mousedown',   onMouseDown);
-  canvas.addEventListener('mousemove',   onMouseMove);
-  canvas.addEventListener('mouseup',     onMouseUp);
-
-  isDrawing = false;
-  document.getElementById('btn-sig-confirm').disabled = true;
-}
-
-function getPos(e, canvas) {
-  const rect = canvas.getBoundingClientRect();
-  const src  = e.touches ? e.touches[0] : e;
-  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
-}
-
-function onTouchStart(e) {
-  e.preventDefault();
-  const p = getPos(e, this);
-  isDrawing = true; lastX = p.x; lastY = p.y;
-  const ctx = this.getContext('2d');
-  ctx.beginPath(); ctx.moveTo(lastX, lastY);
-}
-function onTouchMove(e) {
-  e.preventDefault();
-  if (!isDrawing) return;
-  const p = getPos(e, this);
-  const ctx = this.getContext('2d');
-  ctx.lineTo(p.x, p.y); ctx.stroke();
-  lastX = p.x; lastY = p.y;
-  document.getElementById('btn-sig-confirm').disabled = false;
-}
-function onTouchEnd(e) { e.preventDefault(); isDrawing = false; }
-function onMouseDown(e) {
-  isDrawing = true;
-  const p = getPos(e, this);
-  lastX = p.x; lastY = p.y;
-  const ctx = this.getContext('2d');
-  ctx.beginPath(); ctx.moveTo(lastX, lastY);
-}
-function onMouseMove(e) {
-  if (!isDrawing) return;
-  const p = getPos(e, this);
-  const ctx = this.getContext('2d');
-  ctx.lineTo(p.x, p.y); ctx.stroke();
-  lastX = p.x; lastY = p.y;
-  document.getElementById('btn-sig-confirm').disabled = false;
-}
-function onMouseUp() { isDrawing = false; }
-
-function clearCanvas() {
-  const canvas = document.getElementById('sig-canvas');
-  const ctx    = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  document.getElementById('btn-sig-confirm').disabled = true;
-}
-
-function confirmSig() {
-  const canvas = document.getElementById('sig-canvas');
-  sigDataUrl   = canvas.toDataURL('image/png');
-
-  // 顯示縮圖
-  const img = document.getElementById('sig-img');
-  img.src   = sigDataUrl;
-  img.style.display = 'block';
-  document.getElementById('sig-placeholder').style.display = 'none';
-  document.getElementById('btn-clear-sig').style.display = 'block';
-
-  closeSigOverlay();
-  updateAgreeBtn();
-}
-
-function clearSig() {
-  sigDataUrl = '';
-  document.getElementById('sig-img').style.display    = 'none';
-  document.getElementById('sig-placeholder').style.display = 'block';
-  document.getElementById('btn-clear-sig').style.display   = 'none';
-  updateAgreeBtn();
-}
-
-async function doAgree() {
-  if (submitting) return;
-  if (!sigDataUrl) { alert('請先完成簽名'); return; }
-  submitting = true;
-  const btn = document.getElementById('btn-agree');
-  btn.disabled    = true;
-  btn.textContent = '記錄中…';
-
-  // 裝置資訊
-  const deviceInfo = encodeURIComponent(JSON.stringify({
-    ua: navigator.userAgent.slice(0, 200),
-    sw: screen.width, sh: screen.height,
-    ts: new Date().toISOString(),
-  }));
-
-  try {
-    // Step 1：儲存同意狀態（GET）
-    const r1 = await fetch(
-      `${GAS_URL}?action=saveConsent` +
-      `&userId=${encodeURIComponent(userId)}` +
-      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
-      `&status=consented` +
-      `&deviceInfo=${deviceInfo}`
-    );
-    const d1 = await r1.json();
-    if (!d1.ok) throw new Error(d1.error || '同意書儲存失敗');
-
-    // Step 2：上傳簽名圖片（壓縮後 GET）
-    try {
-      // 把簽名壓縮到較小尺寸
-      const compressed = compressSig(sigDataUrl, 600, 200);
-      const sigParam   = encodeURIComponent(compressed);
-      // 簽名可能很長，用 fetch POST 但只傳簽名，不影響 LINE Webhook
-      await fetch(
-        `${GAS_URL}?action=saveSignature` +
-        `&userId=${encodeURIComponent(userId)}` +
-        `&sig=${sigParam}`
-      );
-    } catch(sigErr) {
-      console.warn('簽名上傳失敗（不影響同意記錄）:', sigErr);
-    }
-
-    // 關閉 LIFF
-    liff.closeWindow();
-
-  } catch(e) {
-    alert('記錄失敗，請稍後再試：' + e.message);
-    btn.disabled    = false;
-    btn.textContent = '✅ 我同意，並開始使用';
-    submitting      = false;
-  }
-}
-
-// 壓縮簽名圖片
-function compressSig(dataUrl, maxW, maxH) {
-  try {
-    const img    = new Image();
-    img.src      = dataUrl;
-    const canvas = document.createElement('canvas');
-    const ratio  = Math.min(maxW / (img.width || maxW), maxH / (img.height || maxH), 1);
-    canvas.width  = Math.round((img.width  || maxW)  * ratio);
-    canvas.height = Math.round((img.height || maxH) * ratio);
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.7); // JPEG 壓縮
-  } catch(e) {
-    return dataUrl; // 壓縮失敗就用原圖
-  }
-}
 
 async function doDecline() {
   if (!confirm('確認不參與本研究？\n\n您的常規醫療照護權益將完全不受影響。')) return;

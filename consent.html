@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>研究知情同意書</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --navy:#1A3A5C; --navy2:#2D5F8A;
+  --grn:#27AE60;  --gbg:#EBF9F1;
+  --red:#C0392B;  --rbg:#FDF0EE;
+  --gray:#F4F6F9; --bdr:#E2E8F0;
+  --txt:#1E293B;  --mut:#64748B;
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  background:#fff; color:var(--txt);
+  min-height:100vh; font-size:15px;
+}
+
+/* Header */
+.header{
+  background:var(--navy); padding:20px 20px 32px;
+  position:relative; overflow:hidden;
+}
+.header::after{
+  content:''; position:absolute; bottom:-20px; left:0; right:0;
+  height:40px; background:#fff;
+  border-radius:50% 50% 0 0 / 20px 20px 0 0;
+}
+.h-label{ color:#7EB8E8; font-size:11px; letter-spacing:2px; }
+.h-title{ color:#fff; font-size:20px; font-weight:800; margin-top:4px; }
+.h-sub{
+  color:#AACCEE; font-size:12px; margin-top:6px; line-height:1.5;
+}
+
+/* Meta */
+.meta-bar{
+  background:var(--gray); border-bottom:1px solid var(--bdr);
+  padding:10px 20px; display:flex; gap:16px; flex-wrap:wrap;
+  font-size:11px; color:var(--mut);
+}
+.meta-bar span strong{ color:var(--navy); }
+
+/* Content */
+.content{
+  padding:20px 20px 0;
+  max-width:680px; margin:0 auto;
+}
+
+.section{ margin-bottom:24px; }
+.section-title{
+  font-size:14px; font-weight:800; color:var(--navy);
+  border-left:4px solid var(--navy); padding-left:10px;
+  margin-bottom:12px;
+}
+.section p{
+  font-size:14px; line-height:1.9; color:var(--txt);
+  margin-bottom:10px;
+}
+.section ul{
+  padding-left:20px; margin-bottom:10px;
+}
+.section ul li{
+  font-size:14px; line-height:1.9; color:var(--txt);
+  margin-bottom:4px;
+}
+
+/* 風險提示 */
+.risk-box{
+  background:#FFFBEB; border:1px solid #FDE68A;
+  border-radius:var(--radius); padding:14px 16px;
+  margin:12px 0;
+}
+.risk-box .risk-title{
+  font-size:13px; font-weight:700; color:#92400E; margin-bottom:8px;
+}
+.risk-box p{
+  font-size:13px; line-height:1.8; color:#78350F;
+}
+
+/* 聯絡資訊 */
+.contact-box{
+  background:var(--gray); border-radius:var(--radius);
+  padding:14px 16px; margin:12px 0;
+}
+.contact-row{
+  display:flex; gap:8px; margin-bottom:6px;
+  font-size:13px; line-height:1.6;
+}
+.contact-row:last-child{ margin-bottom:0; }
+.contact-label{
+  color:var(--mut); font-weight:600; flex-shrink:0; width:72px;
+}
+.contact-val{ color:var(--txt); }
+
+/* 分隔線 */
+.divider{
+  border:none; border-top:2px solid var(--bdr);
+  margin:24px 0;
+}
+
+/* 勾選區 */
+.checklist{
+  background:var(--gray); border-radius:var(--radius);
+  padding:16px; margin:16px 0;
+}
+.check-item{
+  display:flex; align-items:flex-start; gap:12px;
+  margin-bottom:12px; cursor:pointer;
+}
+.check-item:last-child{ margin-bottom:0; }
+.check-box{
+  width:22px; height:22px; border:2px solid var(--bdr);
+  border-radius:6px; flex-shrink:0; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; transition:.15s; cursor:pointer;
+}
+.check-box.checked{
+  background:var(--navy); border-color:var(--navy);
+}
+.check-box.checked::after{
+  content:'✓'; color:#fff; font-size:14px; font-weight:700;
+}
+.check-label{
+  font-size:14px; line-height:1.6; color:var(--txt); font-weight:500;
+}
+
+/* 按鈕 */
+.btn-area{
+  padding:20px; max-width:680px; margin:0 auto;
+  position:sticky; bottom:0; background:#fff;
+  border-top:1px solid var(--bdr);
+  box-shadow:0 -4px 20px rgba(0,0,0,.06);
+}
+.btn-agree{
+  display:block; width:100%; padding:16px;
+  border-radius:var(--radius); border:none;
+  background:var(--navy); color:#fff;
+  font-size:16px; font-weight:700; cursor:pointer;
+  transition:.15s; margin-bottom:10px;
+}
+.btn-agree:disabled{
+  background:#CBD5E1; cursor:not-allowed;
+}
+.btn-agree:not(:disabled):active{ opacity:.85; }
+.btn-decline{
+  display:block; width:100%; padding:13px;
+  border-radius:var(--radius); border:2px solid var(--bdr);
+  background:#fff; color:var(--mut);
+  font-size:14px; font-weight:600; cursor:pointer;
+  transition:.15s;
+}
+.btn-decline:active{ background:var(--gray); }
+.btn-hint{
+  text-align:center; font-size:12px; color:var(--mut);
+  margin-bottom:10px; line-height:1.5;
+}
+
+/* 進度提示 */
+.scroll-hint{
+  text-align:center; padding:8px 20px 16px;
+  font-size:12px; color:var(--mut);
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+
+/* 完成/拒絕頁 */
+.done-screen{
+  display:none; padding:40px 20px; text-align:center;
+  min-height:80vh; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.done-icon{ font-size:64px; margin-bottom:16px; }
+.done-title{ font-size:22px; font-weight:800; margin-bottom:12px; }
+.done-msg{
+  font-size:14px; line-height:1.9; color:var(--mut);
+  max-width:320px; margin:0 auto 24px;
+}
+.btn-close{
+  padding:14px 32px; border-radius:var(--radius); border:none;
+  font-size:15px; font-weight:700; cursor:pointer;
+}
+
+/* 載入 */
+.loading{
+  text-align:center; padding:80px 20px; color:var(--mut);
+}
+.spinner{
+  width:32px; height:32px; border:3px solid var(--bdr);
+  border-top-color:var(--navy); border-radius:50%;
+  animation:spin .8s linear infinite; margin:0 auto 16px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.screen{ display:none; }
+.screen.active{ display:block; }
+#scr-done-agree{ display:none; flex-direction:column; }
+#scr-done-decline{ display:none; flex-direction:column; }
+</style>
+</head>
+<body>
+
+<!-- 載入 -->
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入中…</div></div>
+</div>
+
+<!-- 同意書 -->
+<div id="scr-consent" class="screen">
+
+  <div class="header">
+    <div class="h-label">Informed Consent</div>
+    <div class="h-title">📋 研究知情同意書</div>
+    <div class="h-sub">請仔細閱讀以下內容後，選擇您的意願</div>
+  </div>
+
+  <div class="meta-bar">
+    <span>研究計畫：<strong>對話式 LINE 機器人應用於血液腫瘤病人照護之成效</strong></span>
+    <span>版本：<strong>v1.0</strong></span>
+    <span>IRB 核准日期：<strong id="irb-date">________ 年 __ 月 __ 日</strong></span>
+  </div>
+
+  <div class="content" id="consent-content">
+
+    <!-- 一、研究目的 -->
+    <div class="section" style="margin-top:20px">
+      <div class="section-title">一、研究目的</div>
+      <p>本研究旨在評估利用 LINE 對話式機器人（LINE-based Symptom Monitoring System, LSMS），能否有效協助血液腫瘤病人進行居家症狀監測、生命徵象追蹤、即時衛教諮詢與生活品質評估，以提升整體臨床照護成效，並減輕醫療團隊的照護負擔。</p>
+      <p>主持機構：<strong>國立臺灣大學醫學院附設醫院 血液腫瘤科</strong></p>
+    </div>
+
+    <!-- 二、參與內容 -->
+    <div class="section">
+      <div class="section-title">二、您的參與內容</div>
+      <p>若您同意參與本研究，您將進行以下活動：</p>
+      <ul>
+        <li><strong>症狀回報</strong>：當您有身體不適時，透過本系統回報症狀，系統將根據症狀嚴重度提供分級建議。</li>
+        <li><strong>生命徵象記錄</strong>：定期輸入血壓、心跳、體溫、血糖、體重等數值，由醫療團隊監測異常變化。</li>
+        <li><strong>生活品質問卷</strong>：系統將於初診斷、治療後 3 個月、6 個月、12 個月，推播標準化健康問卷，約需 10–15 分鐘填寫。</li>
+        <li><strong>衛教資訊接收</strong>：系統將提供個人化衛教資訊。</li>
+      </ul>
+      <p>您的參與<strong>完全基於自願</strong>，且可隨時退出研究，退出不會影響您接受的任何常規醫療照護與權益。</p>
+    </div>
+
+    <!-- 三、風險與不便 -->
+    <div class="section">
+      <div class="section-title">三、可能的風險與不便</div>
+      <ul>
+        <li>填寫問卷與回報症狀需花費少量時間（每次約 2–5 分鐘）。</li>
+        <li>本研究<strong>不涉及任何侵入性處置</strong>，不會對您的身體造成傷害。</li>
+      </ul>
+      <div class="risk-box">
+        <div class="risk-title">⚠️ 網際網路傳輸之潛在風險告知</div>
+        <p>依據臨床研究倫理規範，特此告知網際網路研究之機密性損害風險：</p>
+        <p style="margin-top:8px">本研究已採用現行所有合理且安全的科技方法保護您的資料；然而，在實際網際網路互動中，無法完全擔保資料的絕對機密性。您的資料機密性將依本研究所使用之科技類別受到嚴密保護，但在資料經由網路傳輸的過程中，無法確保資料絕對不被任何第三方截取。</p>
+      </div>
+    </div>
+
+    <!-- 四、隱私保護 -->
+    <div class="section">
+      <div class="section-title">四、隱私與資料保護</div>
+      <ul>
+        <li>本研究團隊嚴格遵守<strong>個人資料保護法</strong>及醫院相關規定。</li>
+        <li>所有個人資料與對話紀錄，皆會進行<strong>去識別化處理</strong>（以研究代碼取代真實姓名），並以加密方式儲存於安全伺服器。</li>
+        <li>您的資料僅供本研究使用，不會提供予第三方商業機構。</li>
+        <li>研究結束後，您的研究資料將依規定保存 <strong>5 年</strong>，期滿後依規定銷毀。</li>
+        <li>在研究計畫結束、系統關閉後，您的研究資料可能繼續儲存於系統備份或伺服器歷程紀錄中，直至上述保存期限屆滿銷毀為止。</li>
+      </ul>
+    </div>
+
+    <!-- 五、退出與撤回 -->
+    <div class="section">
+      <div class="section-title">五、退出與撤回同意</div>
+      <ul>
+        <li>您可隨時選擇退出本研究，無需說明理由，且<strong>不影響</strong>您的常規醫療權益。</li>
+        <li>若您希望退出，請於系統中輸入「<strong>退出研究</strong>」，或聯絡您的個案管理師協助辦理。</li>
+        <li>退出後，系統將停止收集您的新資料；已收集之資料將依 IRB 規定繼續保存至期限屆滿。</li>
+        <li>若日後改變心意希望重新加入，請聯絡個案管理師，可協助您重新完成同意程序。</li>
+      </ul>
+    </div>
+
+    <!-- 六、聯絡資訊 -->
+    <div class="section">
+      <div class="section-title">六、聯絡資訊</div>
+      <div class="contact-box">
+        <div class="contact-row">
+          <span class="contact-label">研究主持人</span>
+          <span class="contact-val">○○○ 醫師｜國立臺灣大學醫學院附設醫院 血液腫瘤科</span>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label">聯絡電話</span>
+          <span class="contact-val">○○○○–○○○○</span>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label">電子郵件</span>
+          <span class="contact-val">○○○@ntu.edu.tw</span>
+        </div>
+      </div>
+      <div class="contact-box" style="margin-top:8px">
+        <div class="contact-row">
+          <span class="contact-label">IRB 申訴</span>
+          <span class="contact-val">臺大醫院研究倫理委員會</span>
+        </div>
+        <div class="contact-row">
+          <span class="contact-label">電話</span>
+          <span class="contact-val">（02）2356–2553</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 確認勾選 -->
+    <div class="section">
+      <div class="section-title">請確認以下事項</div>
+      <div class="checklist">
+        <div class="check-item" onclick="toggleCheck('chk1')">
+          <div class="check-box" id="chk1"></div>
+          <div class="check-label">我已年滿 <strong>20 歲</strong></div>
+        </div>
+        <div class="check-item" onclick="toggleCheck('chk2')">
+          <div class="check-box" id="chk2"></div>
+          <div class="check-label">我已充分閱讀並理解上述所有內容</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck('chk3')">
+          <div class="check-box" id="chk3"></div>
+          <div class="check-label">我了解參與完全出於自願，且可隨時輸入「退出研究」離開</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="scroll-hint" id="scroll-hint">
+    ↕️ 請捲動閱讀全文後勾選以上選項
+  </div>
+
+  <div class="btn-area">
+    <div class="btn-hint" id="btn-hint">請勾選上方三個選項後，按鈕才會啟用</div>
+    <button class="btn-agree" id="btn-agree" disabled onclick="doAgree()">
+      ✅ 我同意，並開始使用
+    </button>
+    <button class="btn-decline" onclick="doDecline()">
+      ❌ 我不同意
+    </button>
+  </div>
+
+</div><!-- /scr-consent -->
+
+<!-- 同意完成頁 -->
+<div id="scr-done-agree" class="screen">
+  <div class="done-screen" style="display:flex">
+    <div class="done-icon">🎉</div>
+    <div class="done-title" style="color:var(--navy)">感謝您的參與！</div>
+    <div class="done-msg">
+      您的同意已記錄完成。<br>
+      系統功能現已全部開放，<br>
+      歡迎開始使用！
+    </div>
+    <button class="btn-close" style="background:var(--navy);color:#fff"
+      onclick="liff.closeWindow()">
+      開始使用 →
+    </button>
+  </div>
+</div>
+
+<!-- 拒絕頁 -->
+<div id="scr-done-decline" class="screen">
+  <div class="done-screen" style="display:flex">
+    <div class="done-icon">🙏</div>
+    <div class="done-title" style="color:var(--mut)">感謝您的閱讀</div>
+    <div class="done-msg">
+      謝謝您的回覆。若您選擇不參與本研究，您仍可隨時封鎖本帳號。<br><br>
+      您的<strong>常規醫療照護權益</strong>將完全不受任何影響。<br><br>
+      若日後改變心意，請聯絡您的個案管理師。
+    </div>
+    <button class="btn-close" style="background:var(--gray);color:var(--txt);border:2px solid var(--bdr)"
+      onclick="liff.closeWindow()">
+      關閉
+    </button>
+  </div>
+</div>
+
+<script>
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';    // ← 填入
+const LIFF_ID  = '2010034796-myAIBrsg'; // ← 填入
+const CONSENT_VERSION = 'v1.0';
+
+let userId   = '';
+let checked  = { chk1:false, chk2:false, chk3:false };
+let submitting = false;
+
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    // 檢查是否已同意過
+    const r = await fetch(`${GAS_URL}?action=getConsent&userId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (d.ok && d.status === 'consented') {
+      // 已同意過，直接關閉
+      showScreen('done-agree');
+      return;
+    }
+
+    showScreen('consent');
+  } catch(e) {
+    document.getElementById('scr-loading').innerHTML =
+      `<div class="loading"><div style="font-size:32px">⚠️</div><div style="color:var(--red);margin-top:12px">載入失敗：${e.message}</div></div>`;
+  }
+}
+
+function toggleCheck(id) {
+  checked[id] = !checked[id];
+  const el = document.getElementById(id);
+  el.classList.toggle('checked', checked[id]);
+  const allChecked = checked.chk1 && checked.chk2 && checked.chk3;
+  const btn = document.getElementById('btn-agree');
+  btn.disabled = !allChecked;
+  document.getElementById('btn-hint').textContent = allChecked
+    ? '點選下方按鈕，即完成電子同意程序'
+    : '請勾選上方三個選項後，按鈕才會啟用';
+  document.getElementById('scroll-hint').style.display = 'none';
+}
+
+async function doAgree() {
+  if (submitting) return;
+  submitting = true;
+  const btn = document.getElementById('btn-agree');
+  btn.disabled = true;
+  btn.textContent = '記錄中…';
+
+  try {
+    const r = await fetch(
+      `${GAS_URL}?action=saveConsent` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
+      `&status=consented`
+    );
+    const d = await r.json();
+    if (d.ok) {
+      showScreen('done-agree');
+    } else {
+      alert('記錄失敗，請稍後再試：' + (d.error||''));
+      btn.disabled  = false;
+      btn.textContent = '✅ 我同意，並開始使用';
+      submitting = false;
+    }
+  } catch(e) {
+    alert('連線失敗，請稍後再試');
+    btn.disabled    = false;
+    btn.textContent = '✅ 我同意，並開始使用';
+    submitting = false;
+  }
+}
+
+async function doDecline() {
+  if (!confirm('確認不參與本研究？\n\n您的常規醫療照護權益將完全不受影響。')) return;
+  try {
+    await fetch(
+      `${GAS_URL}?action=saveConsent` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
+      `&status=declined`
+    );
+  } catch(e) {}
+  showScreen('done-decline');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('scr-' + name);
+  el.classList.add('active');
+  if (name === 'done-agree' || name === 'done-decline') {
+    el.querySelector('.done-screen').style.display = 'flex';
+  }
+  window.scrollTo(0, 0);
+}
+
+init().catch(e => console.error(e));
+</script>
+</body>
+</html>

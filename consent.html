@@ -350,37 +350,23 @@ body{
 
 </div><!-- /scr-consent -->
 
-<!-- 同意完成頁 -->
+<!-- 完成頁（closeWindow 失敗時的 fallback）-->
 <div id="scr-done-agree" class="screen">
   <div class="done-screen" style="display:flex">
-    <div class="done-icon">🎉</div>
-    <div class="done-title" style="color:var(--navy)">感謝您的參與！</div>
-    <div class="done-msg">
-      您的同意已記錄完成。<br>
-      系統功能現已全部開放，<br>
-      歡迎開始使用！
-    </div>
+    <div class="done-icon">✅</div>
+    <div class="done-title" style="color:var(--navy)">同意已記錄</div>
+    <div class="done-msg">請返回 LINE 查看確認訊息。</div>
     <button class="btn-close" style="background:var(--navy);color:#fff"
-      onclick="liff.closeWindow()">
-      開始使用 →
-    </button>
+      onclick="liff.closeWindow()">關閉</button>
   </div>
 </div>
-
-<!-- 拒絕頁 -->
 <div id="scr-done-decline" class="screen">
   <div class="done-screen" style="display:flex">
     <div class="done-icon">🙏</div>
-    <div class="done-title" style="color:var(--mut)">感謝您的閱讀</div>
-    <div class="done-msg">
-      謝謝您的回覆。若您選擇不參與本研究，您仍可隨時封鎖本帳號。<br><br>
-      您的<strong>常規醫療照護權益</strong>將完全不受任何影響。<br><br>
-      若日後改變心意，請聯絡您的個案管理師。
-    </div>
+    <div class="done-title" style="color:var(--mut)">已記錄</div>
+    <div class="done-msg">請返回 LINE 查看訊息。</div>
     <button class="btn-close" style="background:var(--gray);color:var(--txt);border:2px solid var(--bdr)"
-      onclick="liff.closeWindow()">
-      關閉
-    </button>
+      onclick="liff.closeWindow()">關閉</button>
   </div>
 </div>
 
@@ -445,10 +431,11 @@ async function doAgree() {
     );
     const d = await r.json();
     if (d.ok) {
-      showScreen('done-agree');
+      // 直接關閉 LIFF，GAS 會推播確認訊息給病人
+      liff.closeWindow();
     } else {
       alert('記錄失敗，請稍後再試：' + (d.error||''));
-      btn.disabled  = false;
+      btn.disabled    = false;
       btn.textContent = '✅ 我同意，並開始使用';
       submitting = false;
     }
@@ -470,7 +457,8 @@ async function doDecline() {
       `&status=declined`
     );
   } catch(e) {}
-  showScreen('done-decline');
+  // 直接關閉 LIFF，GAS 會推播訊息給病人
+  liff.closeWindow();
 }
 
 function showScreen(name) {

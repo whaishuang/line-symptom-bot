@@ -82,9 +82,11 @@
   .log-level-bar {
     width: 5px; flex-shrink: 0;
   }
-  .log-level-bar.l1 { background: var(--red); }
-  .log-level-bar.l2 { background: var(--orange); }
-  .log-level-bar.l3 { background: var(--green); }
+  .log-level-bar.l1  { background: var(--red); }
+  .log-level-bar.l2  { background: var(--orange); }
+  .log-level-bar.l2a { background: var(--orange); }
+  .log-level-bar.l2b { background: var(--orange); }
+  .log-level-bar.l3  { background: var(--green); }
   .log-content { padding: 12px 14px; flex: 1; }
   .log-top {
     display: flex; justify-content: space-between; align-items: flex-start;
@@ -94,9 +96,11 @@
     font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
     flex-shrink: 0; margin-left: 8px;
   }
-  .log-badge.l1 { background: var(--red-bg); color: var(--red); }
-  .log-badge.l2 { background: var(--orange-bg); color: var(--orange); }
-  .log-badge.l3 { background: var(--green-bg); color: var(--green); }
+  .log-badge.l1  { background: var(--red-bg); color: var(--red); }
+  .log-badge.l2  { background: var(--orange-bg); color: var(--orange); }
+  .log-badge.l2a { background: var(--orange-bg); color: var(--orange); }
+  .log-badge.l2b { background: var(--orange-bg); color: var(--orange); }
+  .log-badge.l3  { background: var(--green-bg); color: var(--green); }
   .log-followup { font-size: 12px; color: var(--muted); margin-top: 3px; }
   .log-time { font-size: 11px; color: #B0B8C4; margin-top: 6px; }
 
@@ -240,17 +244,18 @@ let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-Je
 let profileData = {};
 
 // ── 同意書檢查（每個 LIFF 共用）────────────────────────────
-const LIFF_CONSENT_URL = 'https://liff.line.me/2010034796-myAIBrsg';
+const LIFF_CONSENT_URL = 'https://liff.line.me/2010034796-myAIBrsg'; // ← 填入
 
-async function checkConsent(userId, gasUrl)
+async function checkConsent(userId)
 {
   try {
-    const r = await fetch(`${gasUrl}?action=getConsent&userId=${encodeURIComponent(userId)}`);
+    const r = await fetch(`${GAS_URL}?action=getConsent&userId=${encodeURIComponent(userId)}`);
     const d = await r.json();
     if (d.ok && d.status === 'consented') return true;
   }
   catch(e) { console.warn('checkConsent error:', e); }
 
+  // 未同意：顯示提示頁，蓋住整個畫面
   document.body.innerHTML = `
     <div style="min-height:100vh;display:flex;flex-direction:column;
       align-items:center;justify-content:center;padding:32px 24px;
@@ -273,9 +278,11 @@ async function checkConsent(userId, gasUrl)
 }
 
 const LEVEL_INFO = {
-  '1': { cls:'l1', badge:'🚨 第一級' },
-  '2': { cls:'l2', badge:'⚠️ 第二級' },
-  '3': { cls:'l3', badge:'✅ 第三級' },
+  '1':   { cls:'l1',  badge:'🚨 第一級'  },
+  '2':   { cls:'l2a', badge:'⚠️ 第二級A' },  // 舊資料：視同 2A
+  '2a':  { cls:'l2a', badge:'⚠️ 第二級A' },
+  '2b':  { cls:'l2b', badge:'📋 第二級B' },
+  '3':   { cls:'l3',  badge:'✅ 第三級'  },
 };
 
 async function init() {
@@ -285,7 +292,7 @@ async function init() {
   userId = profile.userId;
 
 // ↓ 加這兩行，檢查不過就直接 return
-  if (!await checkConsent(userId, GAS_URL)) return;
+  if (!await checkConsent(userId)) return;
 
   await loadAll();
 }
@@ -317,7 +324,7 @@ async function loadAll() {
 
 function renderPage(logs, patient) {
   const l1 = logs.filter(l => String(l.level) === '1').length;
-  const l2 = logs.filter(l => String(l.level) === '2').length;
+  const l2 = logs.filter(l => ['2','2a','2b'].includes(String(l.level).toLowerCase())).length;
   const l3 = logs.filter(l => String(l.level) === '3').length;
 
   let logsHtml = '';
@@ -330,7 +337,7 @@ function renderPage(logs, patient) {
   } else {
     logsHtml = '<div class="log-list">';
     logs.forEach(log => {
-      const lv   = String(log.level);
+      const lv   = String(log.level || '').toLowerCase().trim();
       const info = LEVEL_INFO[lv] || { cls:'l3', badge:'—' };
       const fu   = log.followup_answer ? `<div class="log-followup">↳ ${log.followup_answer}</div>` : '';
       const time = String(log.timestamp).slice(0, 16);

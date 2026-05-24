@@ -157,10 +157,17 @@ body {
   padding: 12px 16px; background: #fff;
   border-top: 1px solid var(--bdr); box-shadow: 0 -4px 16px rgba(0,0,0,.06);
 }
-.btn-again {
+.result-footer { display: flex; flex-direction: column; gap: 8px; }
+.btn-done {
   display: block; width: 100%; padding: 14px;
-  background: var(--navy); color: #fff; border: none;
+  background: var(--grn); color: #fff; border: none;
   border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.btn-again {
+  display: block; width: 100%; padding: 12px;
+  background: #fff; color: var(--navy);
+  border: 2px solid var(--navy);
+  border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer;
 }
 
 /* 載入 */
@@ -187,7 +194,7 @@ body {
   </div>
   <div class="main">
     <div class="no-sym-wrap">
-      <button class="no-sym-btn" onclick="selectSymptom('no_symptom')">
+      <button class="no-sym-btn" onclick="selectSym('no_symptom')">
         <span style="font-size:26px">😊</span> 無症狀
       </button>
     </div>
@@ -220,6 +227,7 @@ body {
     <div id="cm-section" style="display:none"></div>
   </div>
   <div class="result-footer">
+    <button class="btn-done"  onclick="liff.closeWindow()">✓ 完成</button>
     <button class="btn-again" onclick="showScreen('list')">再回報一個症狀</button>
   </div>
 </div>
@@ -288,6 +296,14 @@ const LEVELS = {
 • 多休息，維持適當水分補充<br>
 • 若症狀持續超過 3 天或突然加重，請聯絡個管師<br>
 • 下次門診時告知醫師目前狀況`,
+  },
+  no_symptom: {
+    cls: 'l3', icon: '😊', badge: '今日無症狀',
+    title: '很棒！繼續維持！',
+    msg: `今天沒有不舒服，很棒！<br><br>
+• 持續規律回報，幫助醫療團隊掌握您的狀況<br>
+• 若之後出現任何不適，隨時可以回來回報<br>
+• 保持良好的生活習慣，繼續加油 💪`,
   },
 };
 
@@ -754,7 +770,7 @@ function selectOpt(v, label)
 // ── 顯示結果 ──────────────────────────────────────────────────
 async function doResult(level, fKey, fAns)
 {
-  const info = LEVELS[level];
+  const info = (currentSym?.id === 'no_symptom') ? LEVELS.no_symptom : LEVELS[level];
   const hdr  = document.getElementById('result-header');
   hdr.className = `result-header ${info.cls}`;
   document.getElementById('result-icon').textContent  = info.icon;

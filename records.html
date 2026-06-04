@@ -140,8 +140,7 @@
   .profile-val.empty { color: #B0B8C4; font-weight: 400; font-style: italic; }
 
   /* Edit form */
-  .edit-form { padding: 16px 18px; display: none; border-top: 1px solid var(--border); }
-  .edit-form.open { display: block; }
+
   .form-group { margin-bottom: 14px; }
   .form-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
   .form-input {
@@ -386,7 +385,6 @@ function renderPage(logs, patient) {
     <div class="profile-card">
       <div class="profile-header">
         個人資料
-        <button class="edit-link" onclick="toggleEdit()">✏️ 編輯</button>
       </div>
       <div class="profile-row">
         <div class="profile-icon">👤</div>
@@ -403,23 +401,7 @@ function renderPage(logs, patient) {
         </div>
       </div>
 
-      <!-- 編輯表單 -->
-      <div class="edit-form" id="edit-form">
-        <div class="form-group">
-          <div class="form-label">👤 姓名</div>
-          <input class="form-input" id="input-name" type="text"
-                 placeholder="請填入您的姓名" value="${realName}" maxlength="20">
-        </div>
-        <div class="form-group">
-          <div class="form-label">🏥 病歷號</div>
-          <input class="form-input" id="input-mrn" type="text"
-                 placeholder="請填入您的病歷號" value="${mrn}" maxlength="20">
-        </div>
-        <div class="form-actions">
-          <button class="btn-save" onclick="saveProfile()">💾 儲存</button>
-          <button class="btn-cancel-small" onclick="toggleEdit()">取消</button>
-        </div>
-      </div>
+      ${(!realName || !mrn) ? '<div style="font-size:12px;color:#64748B;padding:8px 0;line-height:1.6">如需修改姓名或病歷號，請至「📋 個管師資料」頁面更新。</div>' : ''}
     </div>
 
     <!-- 症狀記錄 -->
@@ -431,45 +413,7 @@ function renderPage(logs, patient) {
   `;
 }
 
-function toggleEdit() {
-  const form = document.getElementById('edit-form');
-  form.classList.toggle('open');
-  if (form.classList.contains('open')) {
-    document.getElementById('input-name').focus();
-  }
-}
-
-async function saveProfile() {
-  const realName = document.getElementById('input-name').value.trim();
-  const mrn      = document.getElementById('input-mrn').value.trim();
-
-  const btn = document.querySelector('.btn-save');
-  btn.textContent = '儲存中…';
-  btn.disabled = true;
-
-  try {
-    const r = await fetch(
-      `${GAS_URL}?action=savePatient&userId=${userId}` +
-      `&realName=${encodeURIComponent(realName)}` +
-      `&mrn=${encodeURIComponent(mrn)}`
-    );
-    const d = await r.json();
-
-    if (d.ok) {
-      profileData.real_name = realName;
-      profileData.mrn = mrn;
-      showToast('✅ 資料已更新！');
-      setTimeout(() => loadAll(), 1000);
-    } else {
-      alert('儲存失敗，請重試');
-    }
-  } catch(e) {
-    alert('網路錯誤，請重試');
-  } finally {
-    btn.textContent = '💾 儲存';
-    btn.disabled = false;
-  }
-}
+// 基本資料編輯已移至 contact.html
 
 function showToast(msg) {
   const t = document.getElementById('toast');

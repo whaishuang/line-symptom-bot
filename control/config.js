@@ -15,7 +15,7 @@ const SITE_CONFIG = {
   // ── GAS 部署網址 ────────────────────────────────────────────
   // 對照組專屬 GAS，從對照組試算表的「擴充功能 → Apps Script」部署
   // 部署後在「管理部署作業」複製網路應用程式網址貼在這裡
-  GAS_URL: 'YOUR_CONTROL_GAS_URL',        // ← 填入對照組 GAS 部署網址
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwyPDrxDM8z-DRsd5GQjq1sKPhBGxoCqzVtQQAcetkXjcWP0_4k-3V0N_BO0KDeeYX_/exec',        // ← 填入對照組 GAS 部署網址
 
   // ── LIFF ID ─────────────────────────────────────────────────
   // 對照組不使用的頁面留空字串即可（不會被呼叫到）
@@ -31,8 +31,8 @@ const SITE_CONFIG = {
   //   https://whaishuang.github.io/line-symptom-bot/control/consent.html
   //   https://whaishuang.github.io/line-symptom-bot/control/contact.html
   //
-  LIFF_SURVEY:   'YOUR_CTRL_LIFF_SURVEY',  // ← 建立後填入（格式：xxxxxxxx-xxxxxxxx）
-  LIFF_CONSENT:  'YOUR_CTRL_LIFF_CONSENT', // ← 建立後填入
-  LIFF_CONTACT:  'YOUR_CTRL_LIFF_CONTACT', // ← 建立後填入
+  LIFF_SURVEY:   '2010034796-uM2gpnem',  // ← 建立後填入（格式：xxxxxxxx-xxxxxxxx）
+  LIFF_CONSENT:  '2010034796-jO5jUcev', // ← 建立後填入
+  LIFF_CONTACT:  '2010034796-WyoYQdw4', // ← 建立後填入
 
 };

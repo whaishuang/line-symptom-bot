@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>生命徵象記錄</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
 <style>
 :root{
   --navy:#1A3A5C; --navy2:#2D5F8A;
@@ -228,13 +229,11 @@ body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
 </div>
 
 <script>
-const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';  // ← 填入
-const LIFF_ID  = '2010034796-J1whLo0G'; // ← 填入
+let GAS_URL = SITE_CONFIG.GAS_URL;
+const LIFF_ID = SITE_CONFIG.LIFF_VITALS;
 
 // ── 同意書檢查（每個 LIFF 共用）────────────────────────────
-const LIFF_CONSENT_URL = 'https://liff.line.me/2010034796-myAIBrsg';
-
-async function checkConsent(userId, gasUrl)
+const LIFF_CONSENT_URL = 'https://liff.line.me/' + SITE_CONFIG.LIFF_CONSENT;async function checkConsent(userId, gasUrl)
 {
   try {
     const r = await fetch(`${gasUrl}?action=getConsent&userId=${encodeURIComponent(userId)}`);

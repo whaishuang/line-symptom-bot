@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>研究知情同意書</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
 <style>
 :root {
   --navy: #1A3A5C;
@@ -210,8 +211,8 @@ hr { border: none; border-top: 2px solid var(--bdr); margin: 24px 0; }
 </div>
 
 <script>
-const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec';    // ← 填入
-const LIFF_ID  = '2010034796-myAIBrsg'; // ← 填入
+let GAS_URL = SITE_CONFIG.GAS_URL;
+const LIFF_ID = SITE_CONFIG.LIFF_CONSENT;
 const CONSENT_VERSION = 'v1.0';
 
 

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>我的記錄</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
@@ -239,11 +240,11 @@
 
 <script>
 let userId = '';
-let GAS_URL = 'https://script.google.com/macros/s/AKfycbx2nSmOjcKrcMpK9XwRHWz-JeUFfHCoNggMnIYHyKx7B_338N8XQk3stmXIQ1Ppj1Z25w/exec'; // ← 部署後填入
+let GAS_URL = SITE_CONFIG.GAS_URL;
 let profileData = {};
 
 // ── 同意書檢查（每個 LIFF 共用）────────────────────────────
-const LIFF_CONSENT_URL = 'https://liff.line.me/2010034796-myAIBrsg'; // ← 填入
+const LIFF_CONSENT_URL = 'https://liff.line.me/' + SITE_CONFIG.LIFF_CONSENT;
 
 async function checkConsent(userId)
 {
@@ -285,7 +286,7 @@ const LEVEL_INFO = {
 };
 
 async function init() {
-  await liff.init({ liffId: '2010034796-FdmhTXPK' }); // ← 填入
+  await liff.init({ liffId: SITE_CONFIG.LIFF_RECORDS }); // ← 填入
   if (!liff.isLoggedIn()) { liff.login(); return; }
   const profile = await liff.getProfile();
   userId = profile.userId;

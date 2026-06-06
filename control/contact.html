@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>聯絡資訊</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<style>
+:root {
+  --navy:  #1A3A5C;
+  --navy2: #2D5F8A;
+  --grn:   #27AE60;
+  --red:   #C0392B;
+  --gray:  #F4F6F9;
+  --bdr:   #E2E8F0;
+  --txt:   #1E293B;
+  --mut:   #64748B;
+  --r:     12px;
+  --shadow:0 2px 12px rgba(26,58,92,.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: var(--gray); color: var(--txt); min-height: 100vh;
+}
+.header {
+  background: var(--navy); padding: 18px 20px 30px;
+  position: relative; overflow: hidden;
+}
+.header::after {
+  content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+  height: 40px; background: var(--gray);
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+}
+.h-label { color: #7EB8E8; font-size: 11px; letter-spacing: 2px; }
+.h-title { color: #fff; font-size: 20px; font-weight: 800; margin-top: 4px; }
+.h-sub   { color: #AACCEE; font-size: 12px; margin-top: 4px; }
+
+/* 提示橫幅 */
+.onboard-banner {
+  background: #EBF5FB; border-left: 4px solid var(--navy2);
+  margin: 14px 16px 0; border-radius: var(--r);
+  padding: 12px 14px; font-size: 13px; color: var(--navy); line-height: 1.7;
+}
+.onboard-banner strong { display: block; font-size: 14px; margin-bottom: 4px; }
+
+/* 卡片 */
+.card {
+  background: #fff; border-radius: var(--r);
+  box-shadow: var(--shadow); margin: 14px 16px 0; overflow: hidden;
+}
+.card-header {
+  background: var(--navy); color: #fff;
+  padding: 11px 16px; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-body { padding: 16px; }
+.card-header-edit {
+  margin-left: auto; background: rgba(255,255,255,.2);
+  border: none; color: #fff; padding: 4px 12px;
+  border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+
+/* 顯示模式 */
+.view-row {
+  display: flex; align-items: flex-start;
+  padding: 8px 0; border-bottom: 1px solid var(--bdr); font-size: 14px;
+}
+.view-row:last-child { border-bottom: none; }
+.view-lbl   { color: var(--mut); font-weight: 600; flex-shrink: 0; width: 84px; }
+.view-val   { color: var(--txt); flex: 1; }
+.view-empty { color: #CBD5E1; }
+
+/* 輸入欄位 */
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: 12px; font-weight: 700;
+  color: var(--navy); margin-bottom: 6px;
+}
+.field label .req { color: var(--red); margin-left: 3px; }
+.field label .opt { color: var(--mut); font-weight: 400; font-size: 11px; margin-left: 4px; }
+.field input {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--bdr);
+  border-radius: var(--r); font-size: 14px; font-family: inherit;
+  background: #fff; color: var(--txt); transition: border-color .15s;
+}
+.field input:focus { outline: none; border-color: var(--navy); }
+.field input.err   { border-color: var(--red); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* 取消/儲存 */
+.edit-actions { display: flex; gap: 10px; margin-top: 14px; }
+.btn-cancel {
+  flex: 0 0 auto; padding: 12px 20px; border-radius: var(--r);
+  border: 2px solid var(--bdr); background: #fff;
+  color: var(--mut); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-save {
+  flex: 1; padding: 13px; border-radius: var(--r); border: none;
+  background: var(--navy); color: #fff;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.btn-save:disabled { opacity: .5; cursor: not-allowed; }
+.btn-save:not(:disabled):active { opacity: .8; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: #1A6B40; color: #fff; padding: 12px 24px;
+  border-radius: 30px; font-size: 14px; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2); opacity: 0; pointer-events: none;
+  transition: opacity .3s; white-space: nowrap; z-index: 999;
+}
+.toast.show { opacity: 1; }
+
+/* 載入 */
+.loading { text-align: center; padding: 80px 20px; color: var(--mut); }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--bdr);
+  border-top-color: var(--navy); border-radius: 50%;
+  animation: spin .8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.screen { display: none; }
+.screen.active { display: block; padding-bottom: 32px; }
+</style>
+</head>
+<body>
+
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入中…</div></div>
+</div>
+
+<div id="scr-main" class="screen">
+  <div class="header">
+    <div class="h-label">Contact Info</div>
+    <div class="h-title">📋 聯絡資訊</div>
+    <div class="h-sub">個管師資料與聯絡人設定</div>
+  </div>
+
+  <div class="onboard-banner" id="onboard-banner" style="display:none">
+    <strong>👋 歡迎！請與個管師一起填寫以下資料</strong>
+    填寫完成後，系統即可為您提供個人化的照護提醒與通知。
+    帶 <span style="color:var(--red)">*</span> 的欄位為必填。
+  </div>
+
+  <!-- 一、病人基本資料 -->
+  <div class="card">
+    <div class="card-header">
+      👤 我的基本資料
+      <button class="card-header-edit" id="btn-edit-patient" onclick="editSec('patient')">✏️ 修改</button>
+    </div>
+    <div class="card-body">
+      <div id="view-patient">
+        <div class="view-row"><span class="view-lbl">姓名</span><span id="vp-name" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">病歷號</span><span id="vp-mrn" class="view-val"></span></div>
+      </div>
+      <div id="edit-patient" style="display:none">
+        <div class="field">
+          <label>姓名<span class="req">*</span></label>
+          <input id="p-name" type="text" placeholder="請輸入真實姓名">
+        </div>
+        <div class="field">
+          <label>病歷號<span class="req">*</span></label>
+          <input id="p-mrn" type="text" placeholder="請輸入病歷號">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-cancel" onclick="cancelSec('patient')">取消</button>
+          <button class="btn-save" onclick="saveSec('patient')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 二、個管師 -->
+  <div class="card">
+    <div class="card-header">
+      👩‍⚕️ 個案管理師
+      <button class="card-header-edit" id="btn-edit-cm" onclick="editSec('cm')">✏️ 修改</button>
+    </div>
+    <div class="card-body">
+      <div id="view-cm">
+        <div class="view-row"><span class="view-lbl">姓名</span><span id="vc-name" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">電話</span><span id="vc-phone" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">Email</span><span id="vc-email" class="view-val"></span></div>
+      </div>
+      <div id="edit-cm" style="display:none">
+        <div class="field">
+          <label>姓名<span class="req">*</span></label>
+          <input id="cm-name" type="text" placeholder="個管師姓名">
+        </div>
+        <div class="field">
+          <label>電話<span class="req">*</span></label>
+          <input id="cm-phone" type="tel" placeholder="0912-345-678">
+        </div>
+        <div class="field">
+          <label>Email<span class="opt">（選填）</span></label>
+          <input id="cm-email" type="email" placeholder="cm@hospital.org.tw">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-cancel" onclick="cancelSec('cm')">取消</button>
+          <button class="btn-save" onclick="saveSec('cm')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 三、病人聯絡方式 -->
+  <div class="card">
+    <div class="card-header">
+      📱 我的聯絡方式
+      <button class="card-header-edit" id="btn-edit-ptc" onclick="editSec('ptc')">✏️ 修改</button>
+    </div>
+    <div class="card-body">
+      <div id="view-ptc">
+        <div class="view-row"><span class="view-lbl">手機/電話</span><span id="vpc-mobile" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">Email</span><span id="vpc-email" class="view-val"></span></div>
+      </div>
+      <div id="edit-ptc" style="display:none">
+        <div class="field">
+          <label>手機或聯絡電話<span class="opt">（選填）</span></label>
+          <input id="ptc-mobile" type="tel" placeholder="0912-345-678">
+        </div>
+        <div class="field">
+          <label>Email<span class="opt">（選填）</span></label>
+          <input id="ptc-email" type="email" placeholder="patient@email.com">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-cancel" onclick="cancelSec('ptc')">取消</button>
+          <button class="btn-save" onclick="saveSec('ptc')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 四、聯絡人一 -->
+  <div class="card">
+    <div class="card-header">
+      👨‍👩‍👧 聯絡人一
+      <button class="card-header-edit" id="btn-edit-f1" onclick="editSec('f1')">✏️ 修改</button>
+    </div>
+    <div class="card-body">
+      <div id="view-f1">
+        <div class="view-row"><span class="view-lbl">姓名</span><span id="vf1-name" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">關係</span><span id="vf1-rel" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">手機/電話</span><span id="vf1-mobile" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">Email</span><span id="vf1-email" class="view-val"></span></div>
+      </div>
+      <div id="edit-f1" style="display:none">
+        <div class="field-row">
+          <div class="field">
+            <label>姓名<span class="opt">（選填）</span></label>
+            <input id="f1-name" type="text" placeholder="姓名">
+          </div>
+          <div class="field">
+            <label>關係<span class="opt">（選填）</span></label>
+            <input id="f1-rel" type="text" placeholder="配偶/子女/父母">
+          </div>
+        </div>
+        <div class="field">
+          <label>手機或聯絡電話<span class="opt">（選填）</span></label>
+          <input id="f1-mobile" type="tel" placeholder="0912-345-678">
+        </div>
+        <div class="field">
+          <label>Email<span class="opt">（選填）</span></label>
+          <input id="f1-email" type="email" placeholder="family@email.com">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-cancel" onclick="cancelSec('f1')">取消</button>
+          <button class="btn-save" onclick="saveSec('f1')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 五、聯絡人二 -->
+  <div class="card">
+    <div class="card-header">
+      👨‍👩‍👦 聯絡人二
+      <button class="card-header-edit" id="btn-edit-f2" onclick="editSec('f2')">✏️ 修改</button>
+    </div>
+    <div class="card-body">
+      <div id="view-f2">
+        <div class="view-row"><span class="view-lbl">姓名</span><span id="vf2-name" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">關係</span><span id="vf2-rel" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">手機/電話</span><span id="vf2-mobile" class="view-val"></span></div>
+        <div class="view-row"><span class="view-lbl">Email</span><span id="vf2-email" class="view-val"></span></div>
+      </div>
+      <div id="edit-f2" style="display:none">
+        <div class="field-row">
+          <div class="field">
+            <label>姓名<span class="opt">（選填）</span></label>
+            <input id="f2-name" type="text" placeholder="姓名">
+          </div>
+          <div class="field">
+            <label>關係<span class="opt">（選填）</span></label>
+            <input id="f2-rel" type="text" placeholder="配偶/子女/父母">
+          </div>
+        </div>
+        <div class="field">
+          <label>手機或聯絡電話<span class="opt">（選填）</span></label>
+          <input id="f2-mobile" type="tel" placeholder="0912-345-678">
+        </div>
+        <div class="field">
+          <label>Email<span class="opt">（選填）</span></label>
+          <input id="f2-email" type="email" placeholder="family@email.com">
+        </div>
+        <div class="edit-actions">
+          <button class="btn-cancel" onclick="cancelSec('f2')">取消</button>
+          <button class="btn-save" onclick="saveSec('f2')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scr-main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 同意書檢查 ────────────────────────────────────────────────
+const LIFF_CONSENT_URL = 'https://liff.line.me/' + SITE_CONFIG.LIFF_CONSENT;async function checkConsent(userId, gasUrl)
+{
+  try {
+    const r = await fetch(`${gasUrl}?action=getConsent&userId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (d.ok && d.status === 'consented') return true;
+  }
+  catch(e) { console.warn('checkConsent:', e); }
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;padding:32px 24px;
+      font-family:-apple-system,'PingFang TC',sans-serif;background:#F4F6F9;">
+      <div style="font-size:56px;margin-bottom:20px">📋</div>
+      <div style="font-size:18px;font-weight:800;color:#1A3A5C;margin-bottom:12px">請先完成研究同意書</div>
+      <div style="font-size:14px;color:#64748B;text-align:center;line-height:1.8;margin-bottom:28px;max-width:280px">
+        使用本系統前，需先閱讀並完成研究知情同意書。
+      </div>
+      <button onclick="liff.openWindow({url:'${LIFF_CONSENT_URL}',external:false})"
+        style="padding:14px 32px;background:#1A3A5C;color:#fff;border:none;
+          border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+        📋 前往填寫同意書
+      </button>
+    </div>`;
+  return false;
+}
+
+// ── 設定 ─────────────────────────────────────────────────────
+let GAS_URL = SITE_CONFIG.GAS_URL;
+const LIFF_ID = SITE_CONFIG.LIFF_CONTACT;
+
+let userId  = '';
+let data    = {};
+let isFirst = false;
+
+// ── 初始化 ───────────────────────────────────────────────────
+async function init()
+{
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) { liff.login(); return; }
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  if (!await checkConsent(userId, GAS_URL)) return;
+
+  try {
+    const r = await fetch(`${GAS_URL}?action=getContactInfo&userId=${encodeURIComponent(userId)}`);
+    data = await r.json();
+    if (!data.ok) data = { ok: true, patient: {}, cm: {}, contacts: {} };
+  }
+  catch(e) { data = { ok: true, patient: {}, cm: {}, contacts: {} }; }
+
+  isFirst = !data.patient?.real_name || !data.cm?.name;
+
+  renderAll();
+
+  if (isFirst) {
+    document.getElementById('onboard-banner').style.display = 'block';
+    editSec('patient');
+    editSec('cm');
+  }
+
+  show('main');
+}
+
+function show(name)
+{
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── 渲染唯讀 ─────────────────────────────────────────────────
+function renderAll()
+{
+  const EMPTY = '<span class="view-empty">尚未填寫</span>';
+  const v = val => val ? val : EMPTY;
+  const ct = data.contacts || {};
+
+  document.getElementById('vp-name').innerHTML  = v(data.patient?.real_name);
+  document.getElementById('vp-mrn').innerHTML   = v(data.patient?.mrn);
+  document.getElementById('vc-name').innerHTML  = v(data.cm?.name);
+  document.getElementById('vc-phone').innerHTML = v(data.cm?.phone);
+  document.getElementById('vc-email').innerHTML = v(data.cm?.email);
+  document.getElementById('vpc-mobile').innerHTML = v(ct.patient_mobile);
+  document.getElementById('vpc-email').innerHTML  = v(ct.patient_email);
+  document.getElementById('vf1-name').innerHTML   = v(ct.f1_name);
+  document.getElementById('vf1-rel').innerHTML    = v(ct.f1_rel);
+  document.getElementById('vf1-mobile').innerHTML = v(ct.f1_mobile);
+  document.getElementById('vf1-email').innerHTML  = v(ct.f1_email);
+  document.getElementById('vf2-name').innerHTML   = v(ct.f2_name);
+  document.getElementById('vf2-rel').innerHTML    = v(ct.f2_rel);
+  document.getElementById('vf2-mobile').innerHTML = v(ct.f2_mobile);
+  document.getElementById('vf2-email').innerHTML  = v(ct.f2_email);
+}
+
+// ── 切換編輯 ─────────────────────────────────────────────────
+const FILL_MAP = {
+  patient: [['p-name', 'patient.real_name'], ['p-mrn', 'patient.mrn']],
+  cm:      [['cm-name','cm.name'], ['cm-phone','cm.phone'], ['cm-email','cm.email']],
+  ptc:     [['ptc-mobile','contacts.patient_mobile'], ['ptc-email','contacts.patient_email']],
+  f1:      [['f1-name','contacts.f1_name'], ['f1-rel','contacts.f1_rel'],
+             ['f1-mobile','contacts.f1_mobile'], ['f1-email','contacts.f1_email']],
+  f2:      [['f2-name','contacts.f2_name'], ['f2-rel','contacts.f2_rel'],
+             ['f2-mobile','contacts.f2_mobile'], ['f2-email','contacts.f2_email']],
+};
+
+function getNestedVal(obj, path)
+{
+  return path.split('.').reduce((o, k) => o?.[k] || '', obj);
+}
+
+function editSec(sec)
+{
+  document.getElementById('view-' + sec).style.display = 'none';
+  document.getElementById('edit-' + sec).style.display = 'block';
+  const btn = document.getElementById('btn-edit-' + sec);
+  if (btn) btn.style.display = 'none';
+
+  (FILL_MAP[sec] || []).forEach(([id, path]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = getNestedVal(data, path);
+  });
+}
+
+function cancelSec(sec)
+{
+  document.getElementById('view-' + sec).style.display = 'block';
+  document.getElementById('edit-' + sec).style.display = 'none';
+  const btn = document.getElementById('btn-edit-' + sec);
+  if (btn) btn.style.display = '';
+}
+
+// ── 儲存 ─────────────────────────────────────────────────────
+async function saveSec(sec)
+{
+  const g  = id => (document.getElementById(id)?.value || '').trim();
+  const ct = data.contacts || {};
+
+  // 驗證必填
+  if (sec === 'patient') {
+    if (!g('p-name')) { markErr('p-name', '請輸入姓名'); return; }
+    if (!g('p-mrn'))  { markErr('p-mrn',  '請輸入病歷號'); return; }
+  } else if (sec === 'cm') {
+    if (!g('cm-name'))  { markErr('cm-name',  '請輸入個管師姓名'); return; }
+    if (!g('cm-phone')) { markErr('cm-phone', '請輸入個管師電話'); return; }
+  }
+
+  // 組成完整 payload（保留其他區塊現有值）
+  const payload = {
+    userId,
+    realName:      sec === 'patient' ? g('p-name')   : (data.patient?.real_name || ''),
+    mrn:           sec === 'patient' ? g('p-mrn')    : (data.patient?.mrn       || ''),
+    cmName:        sec === 'cm'      ? g('cm-name')  : (data.cm?.name           || ''),
+    cmPhone:       sec === 'cm'      ? g('cm-phone') : (data.cm?.phone          || ''),
+    cmEmail:       sec === 'cm'      ? g('cm-email') : (data.cm?.email          || ''),
+    patientMobile: sec === 'ptc'     ? g('ptc-mobile') : (ct.patient_mobile || ''),
+    patientEmail:  sec === 'ptc'     ? g('ptc-email')  : (ct.patient_email  || ''),
+    f1Name:        sec === 'f1' ? g('f1-name')   : (ct.f1_name   || ''),
+    f1Rel:         sec === 'f1' ? g('f1-rel')    : (ct.f1_rel    || ''),
+    f1Mobile:      sec === 'f1' ? g('f1-mobile') : (ct.f1_mobile || ''),
+    f1Email:       sec === 'f1' ? g('f1-email')  : (ct.f1_email  || ''),
+    f2Name:        sec === 'f2' ? g('f2-name')   : (ct.f2_name   || ''),
+    f2Rel:         sec === 'f2' ? g('f2-rel')    : (ct.f2_rel    || ''),
+    f2Mobile:      sec === 'f2' ? g('f2-mobile') : (ct.f2_mobile || ''),
+    f2Email:       sec === 'f2' ? g('f2-email')  : (ct.f2_email  || ''),
+  };
+
+  const btn = document.querySelector(`#edit-${sec} .btn-save`);
+  btn.disabled = true; btn.textContent = '儲存中…';
+
+  try {
+    const r = await fetch(`${GAS_URL}?${new URLSearchParams({ action: 'saveContactInfo', ...payload })}`);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || '儲存失敗');
+
+    // 更新本地 data
+    if (sec === 'patient') {
+      data.patient = { ...data.patient, real_name: payload.realName, mrn: payload.mrn };
+    } else if (sec === 'cm') {
+      data.cm = { name: payload.cmName, phone: payload.cmPhone, email: payload.cmEmail };
+    } else {
+      data.contacts = {
+        ...data.contacts,
+        patient_mobile: payload.patientMobile, patient_email: payload.patientEmail,
+        f1_name: payload.f1Name, f1_rel: payload.f1Rel,
+        f1_mobile: payload.f1Mobile, f1_email: payload.f1Email,
+        f2_name: payload.f2Name, f2_rel: payload.f2Rel,
+        f2_mobile: payload.f2Mobile, f2_email: payload.f2Email,
+      };
+    }
+    renderAll();
+    cancelSec(sec);
+    if (isFirst) { document.getElementById('onboard-banner').style.display = 'none'; isFirst = false; }
+    showToast('✅ 儲存成功！');
+  }
+  catch(e) { alert('儲存失敗：' + e.message); }
+  finally   { btn.disabled = false; btn.textContent = '💾 儲存'; }
+}
+
+function markErr(id, msg)
+{
+  const el = document.getElementById(id);
+  el.classList.add('err'); el.focus(); el.placeholder = msg;
+  el.addEventListener('input', () => el.classList.remove('err'), { once: true });
+}
+
+function showToast(msg)
+{
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+init().catch(console.error);
+</script>
+</body>
+</html>

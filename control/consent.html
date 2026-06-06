@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>研究知情同意書</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="config.js"></script>
+<style>
+:root {
+  --navy: #1A3A5C;
+  --gray: #F4F6F9;
+  --bdr:  #E2E8F0;
+  --txt:  #1E293B;
+  --mut:  #64748B;
+  --red:  #C0392B;
+  --r:    12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: #fff; color: var(--txt); font-size: 15px;
+}
+.header {
+  background: var(--navy); padding: 20px 20px 32px;
+  position: relative; overflow: hidden;
+}
+.header::after {
+  content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+  height: 40px; background: #fff;
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+}
+.h-label { color: #7EB8E8; font-size: 11px; letter-spacing: 2px; }
+.h-title { color: #fff; font-size: 20px; font-weight: 800; margin-top: 4px; }
+.h-sub   { color: #AACCEE; font-size: 12px; margin-top: 6px; }
+.meta-bar {
+  background: var(--gray); border-bottom: 1px solid var(--bdr);
+  padding: 10px 20px; font-size: 11px; color: var(--mut);
+}
+.meta-bar strong { color: var(--navy); }
+.content { padding: 20px 20px 0; max-width: 680px; margin: 0 auto; }
+.section { margin-bottom: 24px; }
+.sec-title {
+  font-size: 14px; font-weight: 800; color: var(--navy);
+  border-left: 4px solid var(--navy); padding-left: 10px; margin-bottom: 12px;
+}
+.section p  { font-size: 14px; line-height: 1.9; margin-bottom: 10px; }
+.section ul { padding-left: 20px; margin-bottom: 10px; }
+.section li { font-size: 14px; line-height: 1.9; margin-bottom: 4px; }
+.risk-box {
+  background: #FFFBEB; border: 1px solid #FDE68A;
+  border-radius: var(--r); padding: 14px 16px; margin: 12px 0;
+}
+.risk-box .rt { font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 8px; }
+.risk-box p   { font-size: 13px; line-height: 1.8; color: #78350F; }
+.contact-box  { background: var(--gray); border-radius: var(--r); padding: 14px 16px; margin: 8px 0; }
+.c-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; line-height: 1.6; }
+.c-row:last-child { margin-bottom: 0; }
+.c-lbl { color: var(--mut); font-weight: 600; flex-shrink: 0; width: 72px; }
+hr { border: none; border-top: 2px solid var(--bdr); margin: 24px 0; }
+.checklist { background: var(--gray); border-radius: var(--r); padding: 16px; margin: 16px 0; }
+.chk-item  { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer; }
+.chk-item:last-child { margin-bottom: 0; }
+.chk-box {
+  width: 22px; height: 22px; border: 2px solid var(--bdr);
+  border-radius: 6px; flex-shrink: 0; background: #fff;
+  display: flex; align-items: center; justify-content: center; transition: .15s;
+}
+.chk-box.on { background: var(--navy); border-color: var(--navy); }
+.chk-box.on::after { content: '✓'; color: #fff; font-size: 14px; font-weight: 700; }
+.chk-lbl { font-size: 14px; line-height: 1.6; font-weight: 500; }
+.btn-area {
+  position: sticky; bottom: 0; background: #fff;
+  padding: 12px 20px; border-top: 1px solid var(--bdr);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+}
+.btn-hint { text-align: center; font-size: 12px; color: var(--mut); margin-bottom: 10px; line-height: 1.5; }
+.btn-agree {
+  display: block; width: 100%; padding: 16px;
+  border-radius: var(--r); border: none;
+  background: var(--navy); color: #fff;
+  font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; transition: opacity .2s;
+}
+.btn-agree:disabled { background: #CBD5E1; cursor: not-allowed; }
+.btn-agree:not(:disabled):active { opacity: .85; }
+.btn-decline {
+  display: block; width: 100%; padding: 13px;
+  border-radius: var(--r); border: 2px solid var(--bdr);
+  background: #fff; color: var(--mut); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.loading { text-align: center; padding: 80px 20px; color: var(--mut); }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--bdr);
+  border-top-color: var(--navy); border-radius: 50%;
+  animation: spin .8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.screen { display: none; }
+.screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div id="scr-loading" class="screen active">
+  <div class="loading"><div class="spinner"></div><div>載入中…</div></div>
+</div>
+
+<div id="scr-consent" class="screen">
+  <div class="header">
+    <div class="h-label">Informed Consent</div>
+    <div class="h-title">📋 研究知情同意書</div>
+    <div class="h-sub">請仔細閱讀以下內容後，選擇您的意願</div>
+  </div>
+  <div class="meta-bar">
+    計畫：<strong>對話式 LINE 機器人應用於血液腫瘤病人照護之成效</strong>　
+    版本：<strong>v1.0</strong>　IRB 核准日期：<strong>________ 年 __ 月 __ 日</strong>
+  </div>
+
+  <div class="content">
+
+    <div class="section" style="margin-top:20px">
+      <div class="sec-title">一、研究目的</div>
+      <p>本研究旨在評估利用 LINE 對話式機器人（LINE-based Symptom Monitoring System, LSMS），能否有效協助血液腫瘤病人進行居家症狀監測、生命徵象追蹤、即時衛教諮詢與生活品質評估，以提升整體臨床照護成效，並減輕醫療團隊的照護負擔。本研究分別從病人端（生活品質與治療滿意度）、個案管理師端（工作負擔）及整體照護品質（急診就診率、住院率等）三個面向進行綜合評估。</p>
+      <p>主持機構：<strong>國立臺灣大學醫學院附設醫院 內科部血液腫瘤科</strong></p>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">二、您的參與內容</div>
+      <ul>
+        <li><strong>症狀回報</strong>：透過系統回報症狀，系統根據嚴重度提供分級建議。</li>
+        <li><strong>生命徵象記錄</strong>：定期輸入血壓、心跳、體溫、血糖、體重等數值。</li>
+        <li><strong>生活品質問卷</strong>：於初診斷、治療後 3、6、12 個月推播標準化健康問卷，約需 10–15 分鐘。</li>
+        <li><strong>衛教資訊接收</strong>：系統提供個人化衛教資訊。</li>
+      </ul>
+      <p>您的參與<strong>完全基於自願</strong>，可隨時退出，不影響任何常規醫療照護權益。</p>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">三、可能的風險與不便</div>
+      <ul>
+        <li>填寫問卷與回報症狀需花費少量時間（每次約 2–15 分鐘）。</li>
+        <li>本研究<strong>不涉及任何侵入性處置</strong>，不會對身體造成傷害。</li>
+      </ul>
+      <div class="risk-box">
+        <div class="rt">⚠️ 網際網路傳輸之潛在風險告知</div>
+        <p>本研究已採用現行所有合理且安全的科技方法保護您的資料；然而，在實際網際網路互動中，無法完全擔保資料的絕對機密性，無法確保資料絕對不被任何第三方截取。</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">四、隱私與資料保護</div>
+      <ul>
+        <li>所有個人資料與對話紀錄皆進行<strong>去識別化處理</strong>，以加密方式儲存。</li>
+        <li>資料僅供本研究使用，不提供予第三方商業機構。</li>
+        <li>研究資料保存 <strong>5 年</strong>，期滿後依規定銷毀。</li>
+        <li>系統關閉後，資料可能繼續儲存於備份中，直至保存期限屆滿銷毀。</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">五、退出與撤回同意</div>
+      <ul>
+        <li>可隨時輸入「<strong>退出研究</strong>」退出，無需說明理由。</li>
+        <li>退出後停止收集新資料；已收集資料依 IRB 規定保存至期限屆滿。</li>
+        <li>若日後改變心意，請聯絡個案管理師重新完成同意程序。</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">六、聯絡資訊</div>
+      <div class="contact-box">
+        <div class="c-row"><span class="c-lbl">研究主持人</span><span>○○○ 醫師｜國立臺灣大學醫學院附設醫院 血液腫瘤科</span></div>
+        <div class="c-row"><span class="c-lbl">聯絡電話</span><span>○○○○–○○○○</span></div>
+        <div class="c-row"><span class="c-lbl">電子郵件</span><span>○○○@ntu.edu.tw</span></div>
+      </div>
+      <div class="contact-box">
+        <div class="c-row"><span class="c-lbl">IRB 申訴</span><span>臺大醫院研究倫理委員會　（02）2356–2553</span></div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="section">
+      <div class="sec-title">請確認以下事項</div>
+      <div class="checklist">
+        <div class="chk-item" onclick="toggleChk('c1')">
+          <div class="chk-box" id="c1"></div>
+          <div class="chk-lbl">我已年滿 <strong>20 歲</strong></div>
+        </div>
+        <div class="chk-item" onclick="toggleChk('c2')">
+          <div class="chk-box" id="c2"></div>
+          <div class="chk-lbl">我已充分閱讀並理解上述所有內容</div>
+        </div>
+        <div class="chk-item" onclick="toggleChk('c3')">
+          <div class="chk-box" id="c3"></div>
+          <div class="chk-lbl">我了解參與完全出於自願，且可隨時輸入「退出研究」離開</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--mut);margin-top:12px;line-height:1.7">
+        當您點選「我同意」時，即代表您同意參與本研究。此電子點選紀錄（含您的 LINE 使用者識別碼及同意時間）將作為電子知情同意之憑證。<strong>正式紙本同意書將由個案管理師另行提供簽署。</strong>
+      </p>
+    </div>
+
+  </div>
+
+  <div class="btn-area">
+    <div class="btn-hint" id="btn-hint">請勾選上方三個選項後，按鈕才會啟用</div>
+    <button class="btn-agree" id="btn-agree" disabled onclick="doAgree()">✅ 我同意，並開始使用</button>
+    <button class="btn-decline" onclick="doDecline()">❌ 我不同意</button>
+  </div>
+</div>
+
+<script>
+let GAS_URL = SITE_CONFIG.GAS_URL;
+const LIFF_ID = SITE_CONFIG.LIFF_CONSENT;
+const CONSENT_VERSION = 'v1.0';
+
+
+let userId     = '';
+let chk        = { c1: false, c2: false, c3: false };
+let submitting = false;
+
+async function init()
+{
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    const r = await fetch(`${GAS_URL}?action=getConsent&userId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (d.ok && d.status === 'consented') { liff.closeWindow(); return; }
+
+    show('consent');
+  }
+  catch(e) {
+    document.getElementById('scr-loading').innerHTML =
+      `<div class="loading">
+         <div style="font-size:32px">⚠️</div>
+         <div style="color:var(--red);margin-top:12px">載入失敗：${e.message}</div>
+       </div>`;
+  }
+}
+
+function show(name)
+{
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function toggleChk(id)
+{
+  chk[id] = !chk[id];
+  document.getElementById(id).classList.toggle('on', chk[id]);
+  const allChk = chk.c1 && chk.c2 && chk.c3;
+  document.getElementById('btn-agree').disabled = !allChk;
+  document.getElementById('btn-hint').textContent = allChk
+    ? '點選下方按鈕，即完成電子同意程序'
+    : '請勾選上方三個選項後，按鈕才會啟用';
+}
+
+async function doAgree()
+{
+  if (submitting) return;
+  submitting = true;
+  const btn = document.getElementById('btn-agree');
+  btn.disabled = true; btn.textContent = '記錄中…';
+
+  const deviceInfo = encodeURIComponent(JSON.stringify({
+    ua: navigator.userAgent.slice(0, 200),
+    sw: screen.width, sh: screen.height,
+    ts: new Date().toISOString(),
+  }));
+
+  try {
+    const r = await fetch(
+      `${GAS_URL}?action=saveConsent` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
+      `&status=consented` +
+      `&deviceInfo=${deviceInfo}`
+    );
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || '儲存失敗');
+    liff.closeWindow();
+  }
+  catch(e) {
+    alert('記錄失敗，請稍後再試：' + e.message);
+    btn.disabled    = false;
+    btn.textContent = '✅ 我同意，並開始使用';
+    submitting      = false;
+  }
+}
+
+async function doDecline()
+{
+  if (!confirm('確認不參與本研究？\n\n您的常規醫療照護權益將完全不受影響。')) return;
+  try {
+    await fetch(
+      `${GAS_URL}?action=saveConsent` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&version=${encodeURIComponent(CONSENT_VERSION)}` +
+      `&status=declined`
+    );
+  }
+  catch(e) { /* 失敗仍關閉 */ }
+  liff.closeWindow();
+}
+
+init().catch(e => console.error(e));
+</script>
+</body>
+</html>

@@ -85,6 +85,10 @@ body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
 .result-title{font-size:20px;font-weight:800;}
 .result-sub{font-size:13px;margin-top:6px;opacity:.85;}
 .result-body{background:#fff;padding:20px;}
+.result-guidance{margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr);font-size:14px;line-height:1.8;color:var(--txt);}
+.result-guidance p{margin:0 0 14px;}
+.result-guidance p:last-child{margin-bottom:0;}
+.result-guidance ul{margin:0 0 14px;padding-left:20px;}
 .alert-item{display:flex;align-items:center;gap:10px;padding:8px 0;
   border-bottom:1px solid var(--bdr);}
 .alert-item:last-child{border-bottom:none;}
@@ -218,6 +222,7 @@ body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
       </div>
       <div class="result-body">
         <div id="result-alerts"></div>
+        <div class="result-guidance" id="result-guidance"></div>
         <div class="summary-grid" id="result-summary"></div>
       </div>
     </div>
@@ -376,15 +381,32 @@ function showResult(data, vals) {
   const sub   = document.getElementById('result-sub');
   hdr.className = 'result-header ' + (level===1?'l1':level===2?'l2':'ok');
 
+  const guidance = document.getElementById('result-guidance');
   if (level === 1) {
-    title.textContent = '🚨 第一級警示：請立即聯絡個管師';
-    sub.textContent   = '數值超出安全範圍，個管師已收到通知。';
+    title.textContent = '🚨 請立即前往急診';
+    sub.textContent = '第一級｜立即處理';
+    guidance.innerHTML = '<p>依您目前回報的資訊，已出現本系統設定的<strong>緊急警示條件</strong>。</p>' +
+      '<p><strong>請現在前往急診，或請家人協助送醫。</strong><br>若無法安全自行前往，請撥打 <strong>119</strong>。</p>' +
+      '<p>抵達急診時，請主動告知醫療人員：<br><strong>「我是血液腫瘤科病人，目前正在接受治療。」</strong></p>' +
+      '<p><strong>請勿等待個案管理師回覆後才就醫。</strong></p>' +
+      '<p>個案管理師也會收到本次生命徵象回報通知，但此通知<strong>不能取代立即就醫</strong>。</p>' +
+      '<p><strong>提醒您：</strong><br>本系統僅依您目前輸入的生命徵象提供警示提醒，不能取代醫師診察或醫療人員的專業判斷。</p>';
   } else if (level === 2) {
-    title.textContent = '⚠️ 第二級警示：請告知個管師';
-    sub.textContent   = '數值略有異常，個管師已收到通知。';
+    title.textContent = '⚠️ 建議儘快聯絡醫療團隊評估';
+    sub.textContent = '第二級｜需要醫療團隊進一步評估';
+    guidance.innerHTML = '<p>依您目前回報的資訊，建議由醫療團隊進一步了解您的狀況。</p>' +
+      '<p>請於<strong>今天聯絡您的個案管理師或醫療團隊</strong>，說明目前狀況，並依醫療人員建議安排後續評估或提早回診。</p>' +
+      '<p>在等待聯絡或就醫期間，請持續留意狀況變化。</p>' +
+      '<p>若狀況<strong>明顯或快速惡化</strong>，或出現呼吸困難、意識改變、嚴重出血或其他緊急不適，<strong>請勿等待個案管理師回覆，應立即就醫。</strong></p>' +
+      '<p><strong>提醒您：</strong><br>本系統僅依您目前輸入的生命徵象提供照護資訊及警示提醒，不能取代醫師診察或醫療人員的專業判斷。</p>';
   } else {
-    title.textContent = '✅ 記錄成功';
-    sub.textContent   = '數值在正常範圍內，繼續保持！';
+    title.textContent = '✅ 目前回報未觸發警示條件';
+    sub.textContent = '第三級｜目前未出現警示條件';
+    guidance.innerHTML = '<p>依您目前回報的資訊，尚未出現本系統設定的警示條件。</p>' +
+      '<ul><li>持續留意狀況變化，適當休息並補充水分。</li>' +
+      '<li>若狀況未改善、持續加重，或您對目前狀況感到不安，請聯絡個案管理師或您的醫療團隊。</li>' +
+      '<li>若出現明顯呼吸困難、意識改變、持續高燒或其他嚴重或緊急不適，請立即就醫。</li></ul>' +
+      '<p><strong>提醒您：</strong><br>本系統僅依您目前輸入的生命徵象提供照護資訊及警示提醒，無法涵蓋所有可能的臨床狀況，亦不能取代醫師診察或醫療人員的專業判斷。</p>';
   }
 
   // 警示列表

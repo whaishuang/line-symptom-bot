@@ -199,8 +199,8 @@
   <div class="main">
     <div class="level-guide">
       <div class="badge badge-1"><span class="icon">🚨</span>第一級<br>立即急診</div>
-      <div class="badge badge-2"><span class="icon">⚠️</span>第二級<br>聯絡個管師</div>
-      <div class="badge badge-3"><span class="icon">✅</span>第三級<br>自行觀察</div>
+      <div class="badge badge-2"><span class="icon">⚠️</span>第二級<br>儘快聯絡醫療團隊</div>
+      <div class="badge badge-3"><span class="icon">✅</span>第三級<br>持續觀察</div>
     </div>
     <div id="symptom-list"></div>
   </div>
@@ -405,12 +405,12 @@ const SYMPTOMS = [
 ];
 
 const LEVEL_INFO = {
-  1: { cls:'l1', label:'第一級', title:'🚨 請立即前往急診',
-       msg:'您回報的症狀需要<strong>立即就醫</strong>。\n\n請現在前往急診，或請家人協助送醫。\n如無法自行前往，請撥打 <strong>119</strong>。\n\n抵達急診時請告知：\n「我是血液腫瘤科病人，目前正在接受治療」\n\n<strong>個管師也已同時收到通知。</strong>' },
-  2: { cls:'l2', label:'第二級', title:'⚠️ 請聯絡個管師，安排提早回診',
-       msg:'您回報的症狀建議<strong>盡早回診評估</strong>。\n\n請今天聯絡您的個案管理師，說明目前症狀，由個管師協助安排提早回診。\n\n若症狀突然加重，請直接前往急診。' },
-  3: { cls:'l3', label:'第三級', title:'✅ 可自行觀察',
-       msg:'您回報的症狀目前在可觀察範圍內。\n\n• 多休息，維持適當水分補充\n• 若症狀持續超過 3 天或突然加重，請聯絡個管師\n• 下次門診時告知醫師目前狀況' },
+  1: { cls:'l1', label:'第一級｜立即處理', title:'🚨 請立即前往急診',
+       msg:'依您目前回報的資訊，已出現本系統設定的<strong>緊急警示條件</strong>。\n\n<strong>請現在前往急診，或請家人協助送醫。</strong>\n若無法安全自行前往，請撥打 <strong>119</strong>。\n\n抵達急診時，請主動告知醫療人員：\n<strong>「我是血液腫瘤科病人，目前正在接受治療。」</strong>\n\n<strong>請勿等待個案管理師回覆後才就醫。</strong>\n\n個案管理師也會收到本次症狀回報通知，但此通知<strong>不能取代立即就醫</strong>。\n\n<strong>提醒您：</strong>\n本系統僅依您目前輸入的症狀提供警示提醒，不能取代醫師診察或醫療人員的專業判斷。' },
+  2: { cls:'l2', label:'第二級｜需要醫療團隊進一步評估', title:'⚠️ 建議儘快聯絡醫療團隊評估',
+       msg:'依您目前回報的資訊，建議由醫療團隊進一步了解您的症狀。\n\n請於<strong>今天聯絡您的個案管理師或醫療團隊</strong>，說明目前症狀，並依醫療人員建議安排後續評估或提早回診。\n\n在等待聯絡或就醫期間，請持續留意症狀變化。\n\n若症狀<strong>明顯或快速惡化</strong>，或出現呼吸困難、意識改變、嚴重出血或其他緊急不適，<strong>請勿等待個案管理師回覆，應立即就醫。</strong>\n\n<strong>提醒您：</strong>\n本系統僅依您目前輸入的症狀提供照護資訊及警示提醒，不能取代醫師診察或醫療人員的專業判斷。' },
+  3: { cls:'l3', label:'第三級｜目前未出現警示條件', title:'✅ 目前回報未觸發警示條件',
+       msg:'依您目前回報的資訊，尚未出現本系統設定的警示條件。\n\n• 持續留意症狀變化，適當休息並補充水分。\n• 若症狀未改善、持續加重，或您對目前狀況感到不安，請聯絡個案管理師或您的醫療團隊。\n• 若出現明顯呼吸困難、意識改變、持續高燒或其他嚴重或緊急不適，請立即就醫。\n\n<strong>提醒您：</strong>\n本系統僅依您目前輸入的症狀提供照護資訊及警示提醒，無法涵蓋所有可能的臨床狀況，亦不能取代醫師診察或醫療人員的專業判斷。' },
 };
 
 // ── 狀態 ─────────────────────────────────────────────────────

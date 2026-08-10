@@ -34,3 +34,20 @@ function gasFetch(params) {
   });
   return fetch(`${SITE_CONFIG.GAS_URL}?${query.toString()}`);
 }
+
+// Every LIFF request to GAS must include the signed LINE ID token.
+// Keeping this in config.js protects all existing LIFF pages without duplicating code.
+(function installLiffTokenFetch_() {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function(input, init) {
+    const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (!rawUrl || !rawUrl.startsWith(SITE_CONFIG.GAS_URL) || !window.liff || typeof window.liff.getIDToken !== 'function') {
+      return nativeFetch(input, init);
+    }
+    const idToken = window.liff.getIDToken();
+    if (!idToken) return nativeFetch(input, init);
+    const url = new URL(rawUrl);
+    if (!url.searchParams.has('idToken')) url.searchParams.set('idToken', idToken);
+    return nativeFetch(url.toString(), init);
+  };
+})();

@@ -554,8 +554,13 @@ async function showResult(level, followupKey, followupAnswer) {
   showScreen('result');
 
   // 記錄 + 通知（背景執行）
-  const patient = await fetch(`${GAS_URL}?action=getPatient&userId=${userId}`).then(r=>r.json());
-  const pData = patient.data || {};
+  let pData = {};
+  try {
+    const patient = await fetch(`${GAS_URL}?action=getPatient&userId=${userId}`).then(r => r.json());
+    if (patient.ok) pData = patient.data || {};
+  } catch (e) {
+    console.error('getPatient error:', e);
+  }
 
   // 記錄症狀並取回連續天數
   try {
@@ -570,20 +575,32 @@ async function showResult(level, followupKey, followupAnswer) {
       `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
       `&level=${level}`);
     const logData = await logResp.json();
+    if (!logData.ok) throw new Error(logData.error || '症狀紀錄失敗');
 
     // 顯示連續回報天數
     if (logData.streak !== undefined) {
       showStreakBadge(logData.streak, logData.is_new_day);
     }
-  } catch(e) { console.error('logSymptom error:', e); }
+  } catch(e) {
+    console.error('logSymptom error:', e);
+    alert('症狀未能儲存，請稍後再試：' + e.message);
+    return;
+  }
 
   if (level <= 2) {
-    fetch(`${GAS_URL}?action=notifyCM&userId=${userId}` +
-      `&patientName=${encodeURIComponent(pData.real_name||userProfile?.displayName||'')}` +
-      `&mrn=${encodeURIComponent(pData.mrn||'')}` +
-      `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
-      `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
-      `&level=${level}`);
+    try {
+      const notifyResp = await fetch(`${GAS_URL}?action=notifyCM&userId=${userId}` +
+        `&patientName=${encodeURIComponent(pData.real_name||userProfile?.displayName||'')}` +
+        `&mrn=${encodeURIComponent(pData.mrn||'')}` +
+        `&symptomLabel=${encodeURIComponent(currentSymptom.label)}` +
+        `&followupAnswer=${encodeURIComponent(followupAnswer||'')}` +
+        `&level=${level}`);
+      const notifyData = await notifyResp.json();
+      if (!notifyData.ok) throw new Error(notifyData.error || '通知寄送失敗');
+    } catch (e) {
+      console.error('notifyCM error:', e);
+      alert('症狀已儲存，但通知未能寄出：' + e.message);
+    }
   }
 }
 

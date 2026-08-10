@@ -36,3 +36,12 @@ const SITE_CONFIG = {
   LIFF_CONTACT:  '2010034796-WyoYQdw4', // ← 建立後填入
 
 };
+
+// Compatibility helper for pages that send parameters as an object.
+function gasFetch(params) {
+  const query = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    query.set(key, typeof value === 'string' ? value : JSON.stringify(value));
+  });
+  return fetch(`${SITE_CONFIG.GAS_URL}?${query.toString()}`);
+}

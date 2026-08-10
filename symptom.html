@@ -304,7 +304,7 @@ const SYMPTOMS = [
     followup: null,
     grading: () => 3 },
   { id:'fever',        label:'🌡️ 發燒',      category:'感染／急症',
-    preNote:'化療後任何發燒，或非化療期體溫 ≥38.3°C 持續超過 1 小時',
+    preNote:'化療後任何發燒，或非化療期體溫 ≥38.0°C 持續超過 1 小時',
     followup:{ key:'chemo_timing', question:'請問您最近化療是什麼時候？',
       options:[{label:'14 天以內',value:'within14'},{label:'14 天以上',value:'over14'},{label:'目前沒在化療',value:'none'}]},
     grading:()=>1 },

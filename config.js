@@ -45,9 +45,11 @@ function gasFetch(params) {
       return nativeFetch(input, init);
     }
     const idToken = window.liff.getIDToken();
-    if (!idToken) return nativeFetch(input, init);
+    const accessToken = typeof window.liff.getAccessToken === 'function' ? window.liff.getAccessToken() : '';
+    if (!idToken && !accessToken) return nativeFetch(input, init);
     const url = new URL(rawUrl);
     if (!url.searchParams.has('idToken')) url.searchParams.set('idToken', idToken);
+    if (!url.searchParams.has('accessToken')) url.searchParams.set('accessToken', accessToken);
     return nativeFetch(url.toString(), init);
   };
 })();
